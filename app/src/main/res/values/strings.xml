@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Project</string>
+    <string name="pick_button">PICK FILE</string>
+    <string name="record_button">RECORD</string>
+    <string name="play_button">PLAY</string>
+    <string name="analyze_button">ANALYZE</string>
+    <string name="insert_button">INSERT</string>
+    <string name="extract_button">EXTRACT</string>
+    <string name="title_textView">Title</string>
+    <string name="default_duration">00:00 / 00:00</string>
 </resources>

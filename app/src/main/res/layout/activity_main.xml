@@ -12,7 +12,8 @@
         android:id="@+id/pickFileButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="PICK FILE"
+        android:text="@string/pick_button"
+        android:textColor="@color/button_textColor"
         app:layout_constraintBottom_toTopOf="@id/playerLinear"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/recordButton"
@@ -22,7 +23,8 @@
         android:id="@+id/recordButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="RECORD"
+        android:text="@string/record_button"
+        android:textColor="@color/button_textColor"
         app:layout_constraintBottom_toTopOf="@id/playerLinear"
         app:layout_constraintEnd_toStartOf="@id/pickFileButton"
         app:layout_constraintStart_toStartOf="parent"
@@ -45,8 +47,8 @@
             android:id="@+id/titleTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Title"
-            android:textSize="18dp" />
+            android:text="@string/title_textView"
+            android:textSize="18sp" />
 
         <SeekBar
             android:id="@+id/audioSeekbar"
@@ -59,15 +61,16 @@
             android:id="@+id/durationTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="10dp"
-            android:text="00:00 / 00:00"
+            android:padding="10sp"
+            android:text="@string/default_duration"
             android:textSize="20dp" />
 
         <Button
             android:id="@+id/playButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="PLAY" />
+            android:textColor="@color/button_textColor"
+            android:text="@string/play_button" />
 
     </LinearLayout>
 
@@ -87,21 +90,24 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="ANALYZE"/>
+            android:textColor="@color/button_textColor"
+            android:text="@string/analyze_button"/>
 
         <Button
             android:id="@+id/insertButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="INSERT" />
+            android:textColor="@color/button_textColor"
+            android:text="@string/insert_button" />
 
         <Button
             android:id="@+id/extractButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:text="EXTRACT" />
+            android:textColor="@color/button_textColor"
+            android:text="@string/extract_button" />
 
     </LinearLayout>
 

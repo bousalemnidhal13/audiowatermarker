@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
         playButton = findViewById(R.id.playButton);
         insertButton = findViewById(R.id.insertButton);
         extractButton = findViewById(R.id.extractButton);
+        analyzeButton = findViewById(R.id.analyzeButton);
 
         audioSeekbar = findViewById(R.id.audioSeekbar);
 

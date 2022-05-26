@@ -86,21 +86,21 @@
             android:id="@+id/analyzeButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="18dp"
+            android:layout_margin="10dp"
             android:text="ANALYZE"/>
 
         <Button
             android:id="@+id/insertButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="18dp"
+            android:layout_margin="10dp"
             android:text="INSERT" />
 
         <Button
             android:id="@+id/extractButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="18dp"
+            android:layout_margin="10dp"
             android:text="EXTRACT" />
 
     </LinearLayout>

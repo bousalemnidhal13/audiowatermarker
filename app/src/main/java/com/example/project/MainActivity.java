@@ -17,9 +17,11 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.IOException;
+
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     String duration;
     MediaPlayer mediaPlayer;
     ScheduledExecutorService timer;
+
     public static final int PICK_FILE = 99;
 
 
@@ -97,27 +100,28 @@ public class MainActivity extends AppCompatActivity {
         insertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-              //  WatermarkingFactory wm = new WatermarkingFactory(this.waveInfo, messageInfo, map);
-              //  wm.applyWatermark();
+
+                // Watermarking methode call...
+                // WatermarkingFactory wm = new WatermarkingFactory(null, null);
+                // wm.applyWatermark();
             }
         });
 
         extractButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-              //  WatermarkingFactory wm = new WatermarkingFactory(this.waveInfo, map);
-              //  wm.ExtractWatermark();
+
+                // Extracting methode call...
+                // WatermarkingFactory wm = new WatermarkingFactory(null);
+                // wm.ExtractWatermark();
             }
         });
 
         analyzeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                /* if (wa.isContainWatermark()) {
-                    analyzeButton.setEnabled(true);
-                } else {
-                    // NOT FOUND  !!!
-                } */
+
+                // Analyzing methode call...
             }
         });
 
@@ -148,6 +152,8 @@ public class MainActivity extends AppCompatActivity {
 
         playButton.setEnabled(false);
         analyzeButton.setEnabled(false);
+        extractButton.setEnabled(false);
+        insertButton.setEnabled(false);
     }
 
     @Override
@@ -238,10 +244,16 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer = null;
         }
         playButton.setEnabled(false);
+        analyzeButton.setEnabled(false);
+        extractButton.setEnabled(false);
+        insertButton.setEnabled(false);
+
         titleTextView.setText("TITLE");
         durationTextView.setText("00:00 / 00:00");
         audioSeekbar.setMax(100);
         audioSeekbar.setProgress(0);
     }
+
+    // TODO Try Put the watermarking methods here:
 
 }

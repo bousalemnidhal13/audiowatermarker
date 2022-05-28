@@ -169,9 +169,12 @@ public class MainActivity extends AppCompatActivity {
         });
 
         playButton.setEnabled(false);
+        playButton2.setEnabled(false);
         analyzeButton.setEnabled(false);
         extractButton.setEnabled(false);
         insertButton.setEnabled(false);
+        saveButton.setEnabled(false);
+
     }
 
     @Override

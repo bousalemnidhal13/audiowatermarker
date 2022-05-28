@@ -8,4 +8,5 @@
     <string name="extract_button">EXTRACT</string>
     <string name="title_textView">Title</string>
     <string name="default_duration">00:00 / 00:00</string>
+    <string name="save_button">SAVE</string>
 </resources>

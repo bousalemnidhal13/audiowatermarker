@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 
@@ -26,21 +27,27 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
     TextView titleTextView;
+    TextView titleTextView2;
     TextView durationTextView;
+    TextView durationTextView2;
 
     Button pickFileButton;
     Button playButton;
+    Button playButton2;
     Button insertButton;
     Button extractButton;
     Button analyzeButton;
+    Button saveButton;
 
     SeekBar audioSeekbar;
+    SeekBar audioSeekbar2;
 
     String duration;
     MediaPlayer mediaPlayer;
     ScheduledExecutorService timer;
 
-    public static final int PICK_FILE = 99;
+    public static final int PICK_AUDIO = 99;
+    public static final int PICK_IMAGE = 98;
 
 
     @Override
@@ -49,15 +56,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         titleTextView = findViewById(R.id.titleTextView);
+        titleTextView2 = findViewById(R.id.titleTextView2);
         durationTextView = findViewById(R.id.durationTextView);
+        durationTextView2 = findViewById(R.id.durationTextView2);
 
         pickFileButton = findViewById(R.id.pickFileButton);
         playButton = findViewById(R.id.playButton);
+        playButton2 = findViewById(R.id.playButton2);
         insertButton = findViewById(R.id.insertButton);
         extractButton = findViewById(R.id.extractButton);
         analyzeButton = findViewById(R.id.analyzeButton);
+        saveButton = findViewById(R.id.saveButton);
 
         audioSeekbar = findViewById(R.id.audioSeekbar);
+        audioSeekbar2 = findViewById(R.id.audioSeekbar2);
 
 
         pickFileButton.setOnClickListener(new View.OnClickListener() {
@@ -66,7 +78,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("audio/*");
-                startActivityForResult(intent, PICK_FILE);
+                startActivityForResult(intent, PICK_AUDIO);
             }
         });
 
@@ -100,10 +112,10 @@ public class MainActivity extends AppCompatActivity {
         insertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                // Watermarking methode call...
-                // WatermarkingFactory wm = new WatermarkingFactory(null, null);
-                // wm.applyWatermark();
+                Intent intent = new Intent();
+                intent.setType("image/*");
+                intent.setAction(Intent.ACTION_GET_CONTENT);
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE);
             }
         });
 
@@ -111,9 +123,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                // Extracting methode call...
-                // WatermarkingFactory wm = new WatermarkingFactory(null);
-                // wm.ExtractWatermark();
+                Toast toast = Toast.makeText(getApplicationContext(), "Use extract watermark methode here", Toast.LENGTH_LONG);
+                toast.show();
+
+
+                // extractWatermark(audioUri); Extracting methode call...
             }
         });
 
@@ -121,7 +135,11 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
 
-                // Analyzing methode call...
+                Toast toast = Toast.makeText(getApplicationContext(), "Use analyze watermark methode here", Toast.LENGTH_LONG);
+                toast.show();
+
+
+                // analyzeWatermark(Uri audioUri);  Analyzing methode call...
             }
         });
 
@@ -160,10 +178,20 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == PICK_FILE && resultCode == RESULT_OK) {
+        if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
-                Uri uri = data.getData();
-                createMediaPlayer(uri);
+                Uri audioUri = data.getData();
+                createMediaPlayer(audioUri);
+            }
+        }
+
+        if (requestCode == PICK_IMAGE && resultCode == RESULT_OK){
+            if (data != null) {
+                Toast toast = Toast.makeText(getApplicationContext(), "Use Insert watermark methode here", Toast.LENGTH_LONG);
+                toast.show();
+
+                Uri imageUri = data.getData();
+                // applyWatermark(imageUri, audioUri);  Watermarking methode call...
             }
         }
     }
@@ -183,6 +211,8 @@ public class MainActivity extends AppCompatActivity {
 
             titleTextView.setText(getNameFromUri(uri));
             playButton.setEnabled(true);
+            insertButton.setEnabled(true);
+            analyzeButton.setEnabled(true);
 
             int millis = mediaPlayer.getDuration();
             long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
@@ -248,12 +278,26 @@ public class MainActivity extends AppCompatActivity {
         extractButton.setEnabled(false);
         insertButton.setEnabled(false);
 
-        titleTextView.setText("TITLE");
+        titleTextView.setText("Title");
         durationTextView.setText("00:00 / 00:00");
         audioSeekbar.setMax(100);
         audioSeekbar.setProgress(0);
     }
 
-    // TODO Try Put the watermarking methods here:
+
+
+    // TODO: Implements the watermarking methods here:
+
+    public void applyWatermark(Uri imageUri, Uri audioUri) {
+
+    }
+
+    public void extractWatermark(Uri audioUri) {
+
+    }
+
+    public boolean analyzeWatermark(Uri audioUri) {
+        return false;
+    }
 
 }

@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
@@ -17,6 +18,8 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 import java.util.concurrent.Executors;
@@ -29,7 +32,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
+    // declarations needed for watermarking methodes
     private static final int[] shiftNum = {1,3,7,15,31,63,127,255};
     public static final String MARKER = "@RM";
     public static final int HEADER_LENGTH = MARKER.length() * 8 + 32 + 32 + 8 + 16 + 8 + 8;
@@ -43,8 +46,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-
+    // android views declaration
     TextView titleTextView;
     TextView titleTextView2;
     TextView durationTextView;
@@ -65,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
     MediaPlayer mediaPlayer;
     ScheduledExecutorService timer;
 
+    // for intent result
     public static final int PICK_AUDIO = 99;
     public static final int PICK_IMAGE = 98;
 
@@ -74,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // associate java fields with xml views
         titleTextView = findViewById(R.id.titleTextView);
         titleTextView2 = findViewById(R.id.titleTextView2);
         durationTextView = findViewById(R.id.durationTextView);
@@ -90,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         audioSeekbar = findViewById(R.id.audioSeekbar);
         audioSeekbar2 = findViewById(R.id.audioSeekbar2);
 
-
+        // listener for picking an audio file
         pickFileButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -101,6 +105,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // listener for playing the audio file
         playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -128,6 +133,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // listener for picking an image for the inserting methode
         insertButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -138,6 +144,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // listener for the extracting methode
         extractButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -150,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // listener for the analyze methode
         analyzeButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -162,6 +170,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // audio player seekbar
         audioSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -187,6 +196,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // turn off the buttons for the moment
         playButton.setEnabled(false);
         playButton2.setEnabled(false);
         analyzeButton.setEnabled(false);
@@ -200,6 +210,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // get audio uri
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
                 Uri audioUri = data.getData();
@@ -207,17 +218,39 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        // get image uri
         if (requestCode == PICK_IMAGE && resultCode == RESULT_OK){
             if (data != null) {
-                Toast toast = Toast.makeText(getApplicationContext(), "Use Insert watermark methode here", Toast.LENGTH_LONG);
-                toast.show();
 
+                // get image data from uri
                 Uri imageUri = data.getData();
+
+                // try to get image from uri
+                try {
+                    Bitmap bitmap = null;
+
+                    // get bitmap(image) from uri
+                    bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
+
+                    // convert bitmap to byte[] and put it in byte array
+                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+                    byte[] message = new byte[0];
+                    message = stream.toByteArray();
+
+                    Toast toast = Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG);
+                    toast.show();
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
                 // applyWatermark(imageUri, audioUri);  Watermarking methode call...
             }
         }
     }
 
+    // create media player for the audio selected
     public void createMediaPlayer(Uri uri) {
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioAttributes(
@@ -260,6 +293,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // get the name of the audio selected
     @SuppressLint("Range")
     public String getNameFromUri(Uri uri) {
 
@@ -281,12 +315,15 @@ public class MainActivity extends AppCompatActivity {
         return fileName;
     }
 
+
+    // release the player when destroying the app
     @Override
     protected void onDestroy() {
         super.onDestroy();
         releaseMediaPlayer();
     }
 
+    // the release player methode
     public void releaseMediaPlayer() {
         if (timer != null) {
             timer.shutdown();
@@ -310,6 +347,8 @@ public class MainActivity extends AppCompatActivity {
 
     // TODO: Implements the watermarking methods here:
 
+
+    // the methode for inserting the watermark
     public int[] applyWatermark(int[] audioSamples, byte[] message) {
 
         int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
@@ -341,7 +380,7 @@ public class MainActivity extends AppCompatActivity {
             newSample[offset] = audioSamples[offset] & ~1;
             newSample[offset] |= bitExtract;
             lengthMessage >>= 1;
-            offset++;
+            offset++;   
         }
         // end write length message --- next offset = 56
         //System.out.println("next:" + offset);
@@ -413,6 +452,7 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    // the methode for extracting the watermark
     public byte[] extractWatermark(int[] audioSamples) {
 
         int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
@@ -457,7 +497,8 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public boolean analyzeWatermark(Uri audioUri) {
+    // the methode for analyzing the watermark
+    public boolean isContainedWatermark() {
         byte[] dataHead = new byte[MARKER.length()];
 
         int startIndex = 0;

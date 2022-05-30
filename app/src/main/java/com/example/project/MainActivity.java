@@ -11,6 +11,7 @@ import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
+import android.nfc.Tag;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -21,11 +22,13 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 
+import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -221,8 +224,34 @@ public class MainActivity extends AppCompatActivity {
         // get audio uri
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
+
+                // create the mediaplayer from the data in the uri
                 Uri audioUri = data.getData();
                 createMediaPlayer(audioUri);
+
+
+
+
+
+                // TODO : Trying to get the audio data
+
+                // this the audio data from the raw folder !!
+                // we'll keep it like this for now at least
+                try {
+                    InputStream inputStream = getResources().openRawResource(R.raw.song);
+                    byte[] wavData = new byte[inputStream.available()];
+                    String readBytes = String.format(Locale.US, "read bytes = %d", inputStream.read(wavData));
+                    Log.e("Error", readBytes);
+                    Log.d("byteArray", "" + Arrays.toString(wavData));
+                    inputStream.close();
+
+                } catch (Exception e){
+                    e.printStackTrace();
+                }
+
+                // convert wavData from byte[] to int[]...
+
+
             }
         }
 
@@ -240,17 +269,18 @@ public class MainActivity extends AppCompatActivity {
                     // get bitmap(image) from uri
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
-                    // convert bitmap to byte[] and put it in byte array
+                    // convert bitmap to byte[] and put it in byte array (the byte[] here is signed!)
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
                     byte[] message;
                     message = stream.toByteArray();
 
 
-
+                    // display the array object on screen
                     Toast toast = Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG);
                     toast.show();
 
+                    // Show the image Array in the log console
                     Log.d("byte", "" + Arrays.toString(message));
 
 

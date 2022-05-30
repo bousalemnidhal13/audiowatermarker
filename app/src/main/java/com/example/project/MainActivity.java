@@ -7,13 +7,16 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -22,6 +25,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +51,8 @@ public class MainActivity extends AppCompatActivity {
 
 
     // android views declaration
+    ImageView messageImageview;
+
     TextView titleTextView;
     TextView titleTextView2;
     TextView durationTextView;
@@ -78,6 +84,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // associate java fields with xml views
+        messageImageview = findViewById(R.id.messageImageview);
+
         titleTextView = findViewById(R.id.titleTextView);
         titleTextView2 = findViewById(R.id.titleTextView2);
         durationTextView = findViewById(R.id.durationTextView);
@@ -235,15 +243,27 @@ public class MainActivity extends AppCompatActivity {
                     // convert bitmap to byte[] and put it in byte array
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
-                    byte[] message = new byte[0];
+                    byte[] message;
                     message = stream.toByteArray();
+
+
 
                     Toast toast = Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG);
                     toast.show();
 
+                    Log.d("byte", "" + Arrays.toString(message));
+
+
+                    // convert byte array to image an display it in the activity
+                    Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
+                    messageImageview.setImageBitmap(bmp);
+
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+
+
 
                 // applyWatermark(imageUri, audioUri);  Watermarking methode call...
             }
@@ -344,7 +364,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
     // TODO: Implements the watermarking methods here:
 
 
@@ -433,7 +452,7 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        for (int k=offset;k<audioSamples.length;k++){
+        for (int k=offset; k<audioSamples.length; k++){
             newSample[k] = audioSamples[k];
         }
 

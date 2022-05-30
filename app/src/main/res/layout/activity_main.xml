@@ -32,13 +32,13 @@
 
     <LinearLayout
         android:id="@+id/playerLinear2"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
         android:orientation="vertical"
         android:padding="10dp"
+        app:layout_constraintEnd_toStartOf="@id/messageImageview"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/watermarkingLinear">
 
@@ -76,7 +76,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/save_button"
-            android:textColor="@color/button_textColor"/>
+            android:textColor="@color/button_textColor" />
 
     </LinearLayout>
 
@@ -160,5 +160,15 @@
             android:text="@string/play_button" />
 
     </LinearLayout>
+
+    <ImageView
+        android:id="@+id/messageImageview"
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/playerLinear2"
+        app:layout_constraintTop_toBottomOf="@id/watermarkingLinear" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

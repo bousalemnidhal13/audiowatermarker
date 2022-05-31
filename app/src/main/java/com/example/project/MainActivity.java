@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -221,6 +222,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+
         // get audio uri
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
@@ -228,29 +230,6 @@ public class MainActivity extends AppCompatActivity {
                 // create the mediaplayer from the data in the uri
                 Uri audioUri = data.getData();
                 createMediaPlayer(audioUri);
-
-
-
-
-
-                // TODO : Trying to get the audio data
-
-                // this the audio data from the raw folder !!
-                // we'll keep it like this for now at least
-                try {
-                    InputStream inputStream = getResources().openRawResource(R.raw.song);
-                    byte[] wavData = new byte[inputStream.available()];
-                    String readBytes = String.format(Locale.US, "read bytes = %d", inputStream.read(wavData));
-                    Log.e("Error", readBytes);
-                    Log.d("byteArray", "" + Arrays.toString(wavData));
-                    inputStream.close();
-
-                } catch (Exception e){
-                    e.printStackTrace();
-                }
-
-                // convert wavData from byte[] to int[]...
-
 
             }
         }
@@ -280,13 +259,57 @@ public class MainActivity extends AppCompatActivity {
                     Toast toast = Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG);
                     toast.show();
 
-                    // Show the image Array in the log console
-                    Log.d("byte", "" + Arrays.toString(message));
 
+                        // this the audio data from the raw folder !!
+                        // we'll keep it like this for now at least
+
+                        InputStream inputStream = getResources().openRawResource(R.raw.song);
+                        byte[] wavData = new byte[inputStream.available()];
+
+
+
+                        String readBytes = String.format(Locale.US, "read bytes = %d", inputStream.read(wavData));
+                        Log.e("Bytes number", readBytes);
+                        Log.d("intArray", "" + Arrays.toString(wavData));
+                        inputStream.close();
+
+                        int[] wavDataI = new int[wavData.length];
+
+                        // convert wavData from byte[] to int[]...
+                        for (int i = 0; i < wavData.length; i++){
+                            wavDataI[i] = Byte.toUnsignedInt(wavData[i]);
+                        }
+
+
+                    // Show the image Array in the log console
+                    Log.d("Image", "" + Arrays.toString(message));
+                    Log.d("Audio", "" + Arrays.toString(wavDataI));
+
+
+
+
+                    // Watermarking methode (Insert the image data using the LSB of the audio data)
+                    int[] watermarkedAudio = applyWatermark(wavDataI, message);
+                    Log.d("watermarked", "" + Arrays.toString(watermarkedAudio));
+
+                    // Convert watermarkedAudio from int[] to byte[]
+                    for (int i = 0; i < wavData.length; i++){
+                        wavDataI[i] = Byte.toUnsignedInt(wavData[i]);
+                    }
+
+                    int[] binaryArray = new int[wavDataI.length];
+
+
+                    // TODO: use toBinaryString to get the full binary form of every value
+                    for (int i = 0; i < wavData.length; i++){
+                        binaryArray[i] = Integer.lowestOneBit(wavDataI[i]);
+                    }
+
+                    Log.d("binary", "" + Arrays.toString(binaryArray));
 
                     // convert byte array to image an display it in the activity
-                    Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
-                    messageImageview.setImageBitmap(bmp);
+                    // Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
+                    // messageImageview.setImageBitmap(bmp);
 
 
                 } catch (IOException e) {
@@ -295,7 +318,7 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-                // applyWatermark(imageUri, audioUri);  Watermarking methode call...
+
             }
         }
     }

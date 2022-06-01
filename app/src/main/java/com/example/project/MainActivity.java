@@ -13,6 +13,7 @@ import android.media.MediaPlayer;
 import android.net.Uri;
 import android.nfc.Tag;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
@@ -22,12 +23,18 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.nio.IntBuffer;
 import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.Executors;
@@ -243,6 +250,7 @@ public class MainActivity extends AppCompatActivity {
 
                 // try to get image from uri
                 try {
+
                     Bitmap bitmap = null;
 
                     // get bitmap(image) from uri
@@ -254,31 +262,30 @@ public class MainActivity extends AppCompatActivity {
                     byte[] message;
                     message = stream.toByteArray();
 
-
-                    // display the array object on screen
-                    Toast toast = Toast.makeText(getApplicationContext(), message.toString(), Toast.LENGTH_LONG);
-                    toast.show();
-
-
-                        // this the audio data from the raw folder !!
-                        // we'll keep it like this for now at least
-
-                        InputStream inputStream = getResources().openRawResource(R.raw.song);
-                        byte[] wavData = new byte[inputStream.available()];
+                    // convert byte array to image an display it in the activity
+                    Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
+                    messageImageview.setImageBitmap(bmp);
 
 
+                    // this the audio data from the raw folder !!
+                    // we'll keep it like this for now at least
 
-                        String readBytes = String.format(Locale.US, "read bytes = %d", inputStream.read(wavData));
-                        Log.e("Bytes number", readBytes);
-                        Log.d("intArray", "" + Arrays.toString(wavData));
-                        inputStream.close();
+                    InputStream inputStream = getResources().openRawResource(R.raw.song);
+                    byte[] wavData = new byte[inputStream.available()];
 
-                        int[] wavDataI = new int[wavData.length];
 
-                        // convert wavData from byte[] to int[]...
-                        for (int i = 0; i < wavData.length; i++){
-                            wavDataI[i] = Byte.toUnsignedInt(wavData[i]);
-                        }
+
+                    String readBytes = String.format(Locale.US, "read bytes = %d", inputStream.read(wavData));
+                    Log.e("Bytes number", readBytes);
+                    Log.d("intArray", "" + Arrays.toString(wavData));
+                    inputStream.close();
+
+                    int[] wavDataI = new int[wavData.length];
+
+                    // convert wavData from byte[] to int[]...
+                    for (int i = 0; i < wavData.length; i++){
+                        wavDataI[i] = Byte.toUnsignedInt(wavData[i]);
+                    }
 
 
                     // Show the image Array in the log console
@@ -289,35 +296,46 @@ public class MainActivity extends AppCompatActivity {
 
 
                     // Watermarking methode (Insert the image data using the LSB of the audio data)
-                    int[] watermarkedAudio = applyWatermark(wavDataI, message);
-                    Log.d("watermarked", "" + Arrays.toString(watermarkedAudio));
-
-                    // Convert watermarkedAudio from int[] to byte[]
-                    for (int i = 0; i < wavData.length; i++){
-                        wavDataI[i] = Byte.toUnsignedInt(wavData[i]);
-                    }
+                    int[] watermarkedAudioI = applyWatermark(wavDataI, message);
+                    Log.d("watermarked", "" + Arrays.toString(watermarkedAudioI));
 
                     int[] binaryArray = new int[wavDataI.length];
 
 
-                    // TODO: use toBinaryString to get the full binary form of every value
-                    for (int i = 0; i < wavData.length; i++){
-                        binaryArray[i] = Integer.lowestOneBit(wavDataI[i]);
+                    // convert int[] to byte[] (watermarkedAudio)
+                    ByteBuffer byteBuffer = ByteBuffer.allocate(watermarkedAudioI.length * 4);
+                    byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+                    for (int value: watermarkedAudioI) {
+                        byteBuffer.putInt(value);
                     }
 
-                    Log.d("binary", "" + Arrays.toString(binaryArray));
+                    byteBuffer.rewind();
+                    byte[] watermarkedAudio = byteBuffer.array();
+                    Log.d("binaryWM", "" + Arrays.toString(watermarkedAudio));
 
-                    // convert byte array to image an display it in the activity
-                    // Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
-                    // messageImageview.setImageBitmap(bmp);
+
+                    // TODO: save the watermarked file
+                    String state = Environment.getExternalStorageState();
+                    if(!Environment.MEDIA_MOUNTED.equals(state)){
+                        return;
+                    }
+
+
+                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"WM.wav");
+                    OutputStream outputStream = new FileOutputStream(file, true);
+
+                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+                    DataOutputStream outFile = new DataOutputStream(bufferedOutputStream);
+
+                    outFile.write(watermarkedAudio);
+                    outFile.flush();
+                    outFile.close();
+
 
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
-
 
             }
         }
@@ -417,7 +435,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // TODO: Implements the watermarking methods here:
 
 
     // the methode for inserting the watermark

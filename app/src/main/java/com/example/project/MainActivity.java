@@ -1,10 +1,15 @@
 package com.example.project;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.PackageManagerCompat;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,6 +17,7 @@ import android.media.AudioAttributes;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.nfc.Tag;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -58,27 +64,19 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-
-
-
     // android views declaration
     ImageView messageImageview;
 
     TextView titleTextView;
-    TextView titleTextView2;
     TextView durationTextView;
-    TextView durationTextView2;
 
     Button pickFileButton;
     Button playButton;
-    Button playButton2;
     Button insertButton;
     Button extractButton;
     Button analyzeButton;
-    Button saveButton;
 
     SeekBar audioSeekbar;
-    SeekBar audioSeekbar2;
 
     String duration;
     MediaPlayer mediaPlayer;
@@ -97,21 +95,16 @@ public class MainActivity extends AppCompatActivity {
         // associate java fields with xml views
         messageImageview = findViewById(R.id.messageImageview);
 
-        titleTextView = findViewById(R.id.titleTextView);
-        titleTextView2 = findViewById(R.id.titleTextView2);
+        titleTextView = findViewById(R.id.titleTextView);;
         durationTextView = findViewById(R.id.durationTextView);
-        durationTextView2 = findViewById(R.id.durationTextView2);
 
         pickFileButton = findViewById(R.id.pickFileButton);
         playButton = findViewById(R.id.playButton);
-        playButton2 = findViewById(R.id.playButton2);
         insertButton = findViewById(R.id.insertButton);
         extractButton = findViewById(R.id.extractButton);
         analyzeButton = findViewById(R.id.analyzeButton);
-        saveButton = findViewById(R.id.saveButton);
 
         audioSeekbar = findViewById(R.id.audioSeekbar);
-        audioSeekbar2 = findViewById(R.id.audioSeekbar2);
 
         // listener for picking an audio file
         pickFileButton.setOnClickListener(new View.OnClickListener() {
@@ -217,14 +210,13 @@ public class MainActivity extends AppCompatActivity {
 
         // turn off the buttons for the moment
         playButton.setEnabled(false);
-        playButton2.setEnabled(false);
         analyzeButton.setEnabled(false);
         extractButton.setEnabled(false);
         insertButton.setEnabled(false);
-        saveButton.setEnabled(false);
 
     }
 
+    @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -314,22 +306,35 @@ public class MainActivity extends AppCompatActivity {
                     Log.d("binaryWM", "" + Arrays.toString(watermarkedAudio));
 
 
-                    // TODO: save the watermarked file
+                    // TODO: save the watermarked file in the download directory
                     String state = Environment.getExternalStorageState();
                     if(!Environment.MEDIA_MOUNTED.equals(state)){
                         return;
                     }
 
 
-                    File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),"WM.wav");
-                    OutputStream outputStream = new FileOutputStream(file, true);
+                    // TODO: scrambled file generated (Fix it)
+                    int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+                    if (permissionCheck == PackageManager.PERMISSION_GRANTED){
 
-                    BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
-                    DataOutputStream outFile = new DataOutputStream(bufferedOutputStream);
+                        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+                        File file = new File(dir, "outputAudio.wav");
+                        OutputStream outputStream = new FileOutputStream(file, true);
 
-                    outFile.write(watermarkedAudio);
-                    outFile.flush();
-                    outFile.close();
+                        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
+                        DataOutputStream outFile = new DataOutputStream(bufferedOutputStream);
+
+                        outFile.write(watermarkedAudio);
+                        outFile.flush();
+                        outFile.close();
+                        
+                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK ADDED AND FILE SAVED!", Toast.LENGTH_LONG);
+                        toast.show();
+
+                    } else {
+                        requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                    }
+
 
 
 

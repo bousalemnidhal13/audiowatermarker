@@ -73,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
     private int[] dataHeader = new int[HEADER_LENGTH];
 
 
+    Uri audioUri;
+
+
 
 
 
@@ -196,12 +199,30 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
     public byte[] ShortArray2ByteArray(short[] values){
         ByteBuffer buffer = ByteBuffer.allocate(2 * values.length);
         buffer.order(LITTLE_ENDIAN); // data must be in little endian format
         for (short value : values){
+            buffer.putShort(value);
+        }
+        buffer.rewind();
+        return buffer.array();
+    }
+
+    public byte[] FloatArray2ByteArray(float[] values){
+        ByteBuffer buffer = ByteBuffer.allocate(4 * values.length);
+        buffer.order(LITTLE_ENDIAN); // data must be in little endian format
+        for (float value : values){
+            buffer.putFloat(value);
+        }
+        buffer.rewind();
+        return buffer.array();
+    }
+
+    public byte[] IntArray2ByteArray(int[] values){
+        ByteBuffer buffer = ByteBuffer.allocate(4 * values.length);
+        buffer.order(LITTLE_ENDIAN); // data must be in little endian format
+        for (int value : values){
             buffer.putInt(value);
         }
         buffer.rewind();
@@ -465,8 +486,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
 
-                // create the mediaplayer from the data in the uri
-                Uri audioUri = data.getData();
+                // create the media player from the data in the uri
+                audioUri = data.getData();
                 createMediaPlayer(audioUri);
 
             }
@@ -502,9 +523,6 @@ public class MainActivity extends AppCompatActivity {
                     int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED){
 
-                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK ADDED AND FILE SAVED!", Toast.LENGTH_LONG);
-                        toast.show();
-
                         System.out.println("First condition");
 
                     } else {
@@ -512,27 +530,27 @@ public class MainActivity extends AppCompatActivity {
                         System.out.println("Second condition");
                     }
 
-                    // ISSUE: the path is always null for some reason
-                    String audioFileAbsolutePath = null;
-                    audioFileAbsolutePath = assetFilePath(this, "song.wav");
-                    System.out.println("Path is : " + audioFileAbsolutePath);
+                    // ISSUE: the path is always null for some reasons
+                    String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
+                    System.out.println("File Path is: " + audioFileAbsolutePath);
 
                     MainActivity mainActivity = new MainActivity();
+
                     float[] audioData = mainActivity.ReadingAudioFile(audioFileAbsolutePath);
 
 
-                    float[] manipulatedAudioData = new float[audioData.length];
+
+                    // TODO: calling the watermark methode !
+                    // float[] manipulatedAudioData = new float[audioData.length];
+
+                    // applyWatermark(audioData, message);
 
 
-                    // TODO: do the changes in the audio data here !
 
-
-
-
-                    short int16[] = float32ToInt16(manipulatedAudioData);
+                    short int16[] = float32ToInt16(audioData);
 
                     mainActivity.WriteCleanAudioWav(this, "new_song.wav", int16);
-
+                    System.out.println(Arrays.toString(int16));
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -846,14 +864,13 @@ public class MainActivity extends AppCompatActivity {
 
 
     // Copies specified asset to the file in /files app directory and returns this file absolute path.
-    public static String assetFilePath(Context context, String assetName) throws IOException {
-        String path = null;
+    /* public static String assetFilePath(Context context, String assetName) throws IOException {
         File file = new File(context.getFilesDir(), assetName);
         if (file.exists() && file.length() > 0) {
-            path = file.getAbsolutePath();
+            return file.getAbsolutePath();
+        } else {
+            return null;
         }
-        return path;
-    }
 
-
+    } */
 }

@@ -1,13 +1,8 @@
 package com.example.project;
 
-import static com.example.project.AudioUtils.ReadingAudioFile;
-import static com.example.project.AudioUtils.WriteCleanAudioWav;
-import static com.example.project.AudioUtils.float32ToInt16;
-import static com.example.project.BitmapUtils.bitmapToFile;
-import static com.example.project.BitmapUtils.byteToBitmap;
-import static com.example.project.WatermarkUtils.applyWatermark;
-import static com.example.project.WatermarkUtils.extractWatermark;
 
+import static java.nio.ByteOrder.BIG_ENDIAN;
+import static java.nio.ByteOrder.LITTLE_ENDIAN;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -17,15 +12,19 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
+import android.media.Image;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.view.View;
 import android.widget.Button;
@@ -34,9 +33,18 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -46,6 +54,20 @@ import java.util.concurrent.TimeUnit;
 public class MainActivity extends AppCompatActivity {
 
 
+
+    int type [] = {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1};
+    int numberOfBytes[] = {4, 4, 4, 4, 4, 2, 2, 4, 4, 2, 2, 4, 4};
+    int chunkSize, subChunk1Size, sampleRate, byteRate, subChunk2Size=1, bytePerSample;
+    short audioFomart, numChannels, blockAlign, bitsPerSample=8;
+    String chunkID, format, subChunk1ID, subChunk2ID;
+
+
+
+    // declarations needed for watermarking methodes
+    private static final int[] shiftNum = {1,3,7,15,31,63,127,255};
+    public static final String MARKER = "@RM";
+    public static final int HEADER_LENGTH = MARKER.length() * 8 + 32 + 32 + 8 + 16 + 8 + 8;
+    private int[] dataHeader = new int[HEADER_LENGTH];
 
 
     // uri for the audio file
@@ -245,8 +267,11 @@ public class MainActivity extends AppCompatActivity {
 
                     System.out.println(Arrays.toString(message));
 
-                    Bitmap bitmap = BitmapUtils.byteToBitmap(message);
-                    messageImageview.setImageBitmap(bitmap);
+                    Bitmap bitmap = BitmapFactory.decodeByteArray(message, 0, message.length);
+                    messageImageview = (ImageView) findViewById(R.id.messageImageview);
+                    messageImageview.setImageBitmap(Bitmap.createScaledBitmap(bitmap, messageImageview.getWidth(),
+                            messageImageview.getHeight(), false));
+
 
 
                 } catch (IOException e) {
@@ -272,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
 
                     // convert bitmap to byte[] and put it in byte array (the byte[] here is signed!)
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 70, stream);
                     byte[] message = stream.toByteArray();
 
 
@@ -399,4 +424,399 @@ public class MainActivity extends AppCompatActivity {
         audioSeekbar.setMax(100);
         audioSeekbar.setProgress(0);
     }
+
+
+    // the methode for inserting the watermark
+    public static int[] applyWatermark(int[] audioSamples, byte[] message) {
+
+        int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
+        int shiftNumber = shiftNum[LSBUSed-1];
+        int[] newSample = new int[audioSamples.length];
+        int offset = 0;
+
+        // write marker to audio samples
+        for (int i=0;i<MARKER.length();i++){
+            int kar = MARKER.charAt(i);
+            for (int j=0;j<8;j++){
+                int bitExtract = kar & 1;
+                newSample[offset] = audioSamples[offset] & ~1;
+                newSample[offset] |= bitExtract;
+                kar >>= 1;
+                offset++;
+            }
+        }
+        // end write marker --- next offset = 24
+
+        // write length message to samples
+        int lengthMessage = (int) Math.ceil((double)message.length * 8 /(double) LSBUSed);
+        int length2 = lengthMessage;
+        for (int i=0;i<32;i++){
+            int bitExtract = lengthMessage & 1;
+            newSample[offset] = audioSamples[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            lengthMessage >>= 1;
+            offset++;
+        }
+        // end write length message --- next offset = 56
+        //System.out.println("next:" + offset);
+
+
+        // write message
+        int realLength = 0;
+        int byteExtract = 0;
+        int bitRem=0;
+        int bitDiambil = 0;
+        int i = 0;
+        int lastBit = (message.length * 8) % LSBUSed;
+
+        while (i<message.length){
+            int bitExtract = message[i] & 1;
+            message[i] >>= 1;
+            bitDiambil++;
+
+            byteExtract |= bitExtract << bitRem;
+
+            bitRem++;
+
+            if (bitDiambil >= 8){
+                i++;
+                bitDiambil = 0;
+                realLength++;
+            }
+
+            if (bitRem >=LSBUSed){
+                newSample[offset] = audioSamples[offset] & ~shiftNumber;
+                newSample[offset] |= byteExtract;
+                offset++;
+                byteExtract = 0;
+                bitRem = 0;
+            }else if(bitRem == lastBit && (offset-(HEADER_LENGTH-1)) == length2) {
+                newSample[offset] = audioSamples[offset] & ~ shiftNum[lastBit];
+                newSample[offset] |= byteExtract;
+                offset++;
+                byteExtract = 0;
+                bitRem = 0;
+                i++;
+                bitDiambil=0;
+            }
+
+            if (offset >=audioSamples.length){
+                break;
+            }
+        }
+
+        for (int k=offset;k<audioSamples.length;k++){
+            newSample[k] = audioSamples[k];
+        }
+
+        offset = 24;
+        //System.out.println("len:" + realLength);
+        int realLen = (int) Math.ceil((double)realLength * 8 /(double) LSBUSed);
+        for (int j=0;j<32;j++){
+            int bitExtract = realLen & 1;
+            newSample[offset] = newSample[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            realLen >>= 1;
+            offset++;
+        }
+
+        return newSample;
+
+    }
+
+    // the methode for extracting the watermark
+    public static byte[] extractWatermark(short[] audioSamples) {
+
+        int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
+        int shiftNumber = shiftNum[LSBUSed-1];
+
+        int byteExtract = 0;
+        int bitDiambil=0;
+        // this.tempExt = (String) this.properties.get("ext");
+
+        int startIndex = 128;
+
+        int numByte = 1000000;//lengthMessage * LSBUSed / 8;
+        byte[] message = new byte[numByte];
+
+        int i = 0;
+        int bitRem = 0;
+
+        while(i<numByte){
+            int bitExtract = audioSamples[startIndex] & 1;
+            audioSamples[startIndex] >>=1;
+            bitDiambil++;
+            byteExtract |= bitExtract << bitRem;
+            bitRem++;
+
+            if (bitDiambil >=LSBUSed){
+                startIndex++;
+                bitDiambil = 0;
+            }
+            if (bitRem >=8){
+                message[i] = (byte) byteExtract;
+                i++;
+                bitRem = 0;
+                byteExtract = 0;
+            }
+
+            if (startIndex >= audioSamples.length)
+                break;
+
+        }
+        return message;
+
+    }
+
+    // the methode for analyzing the watermark
+    public boolean isContainedWatermark() {
+        byte[] dataHead = new byte[MARKER.length()];
+
+        int startIndex = 0;
+        for (int i=0;i<dataHead.length;i++){
+            int charEx = 0;
+            for (int j=0;j<8;j++){
+                int bitExtract = dataHeader[startIndex] & 1;
+                charEx |= bitExtract << j;
+                startIndex++;
+            }
+            dataHead[i] = (byte) charEx;
+        }
+        String head = new String(dataHead);
+        System.out.println(head);
+        if (head.equals(MARKER))
+            return true;
+        else
+            return false;
+    }
+
+
+    public static Bitmap byteToBitmap(byte[] b) {
+        return (b == null || b.length == 0) ? null : BitmapFactory
+                .decodeByteArray(b, 0, b.length);
+    }
+
+
+    public static ByteBuffer ByteArrayToNumber(byte bytes[], int numOfBytes, int type){
+        ByteBuffer buffer = ByteBuffer.allocate(numOfBytes);
+        if (type == 0){
+            buffer.order(BIG_ENDIAN); // Check the illustration. If it says little endian, use LITTLE_ENDIAN
+        }
+        else{
+            buffer.order(LITTLE_ENDIAN);
+        }
+        buffer.put(bytes);
+        buffer.rewind();
+        return buffer;
+    }
+
+
+    // convert data to float
+    public static float convertToFloat(byte[] array, int type) {
+        ByteBuffer buffer = ByteBuffer.wrap(array);
+        if (type == 1){
+            buffer.order(LITTLE_ENDIAN);
+        }
+        return (float) buffer.getShort();
+    }
+
+
+    // Methode to read the audio file
+    public int[] ReadingAudioFile(String audioFile) throws IOException {
+
+        try {
+            File file = new File(audioFile);
+            int length = (int) file.length();
+            //System.out.println(length);
+            InputStream fileInputstream = new FileInputStream(file);
+            ByteBuffer byteBuffer;
+            for(int i=0; i<numberOfBytes.length; i++){
+                byte byteArray[] = new byte[numberOfBytes[i]];
+                int r = fileInputstream.read(byteArray, 0, numberOfBytes[i]);
+                byteBuffer = ByteArrayToNumber(byteArray, numberOfBytes[i], type[i]);
+                if (i == 0) {chunkID =  new String(byteArray);/* System.out.println(chunkID); */}
+                if (i == 1) {chunkSize = byteBuffer.getInt();/* System.out.println(chunkSize); */}
+                if (i == 2) {format =  new String(byteArray);/* System.out.println(format); */}
+                if (i == 3) {subChunk1ID = new String(byteArray);/* System.out.println(subChunk1ID); */}
+                if (i == 4) {subChunk1Size = byteBuffer.getInt();/* System.out.println(subChunk1Size); */}
+                if (i == 5) {audioFomart = byteBuffer.getShort();/* System.out.println(audioFomart); */}
+                if (i == 6) {numChannels = byteBuffer.getShort();/* System.out.println(numChannels); */}
+                if (i == 7) {sampleRate = byteBuffer.getInt();/* System.out.println(sampleRate); */}
+                if (i == 8) {byteRate = byteBuffer.getInt();/* System.out.println(byteRate); */}
+                if (i == 9) {blockAlign = byteBuffer.getShort();/* System.out.println(blockAlign); */}
+                if (i == 10) {bitsPerSample = byteBuffer.getShort();/* System.out.println(bitsPerSample); */}
+                if (i == 11) {
+                    subChunk2ID = new String(byteArray) ;
+                    if(subChunk2ID.compareTo("data") == 0) {
+                        continue;
+                    }
+                    else if( subChunk2ID.compareTo("LIST") == 0) {
+                        byte byteArray2[] = new byte[4];
+                        r = fileInputstream.read(byteArray2, 0, 4);
+                        byteBuffer = ByteArrayToNumber(byteArray2, 4, 1);
+                        int temp = byteBuffer.getInt();
+                        //redundant data reading
+                        byte byteArray3[] = new byte[temp];
+                        r = fileInputstream.read(byteArray3, 0, temp);
+                        r = fileInputstream.read(byteArray2, 0, 4);
+                        subChunk2ID = new String(byteArray2) ;
+                    }
+                }
+                if (i == 12) {subChunk2Size = byteBuffer.getInt();System.out.println(subChunk2Size);}
+            }
+            bytePerSample = bitsPerSample/8;
+            int value;
+            ArrayList<Integer> dataVector = new ArrayList<>();
+            while (true){
+                byte byteArray[] = new byte[bytePerSample];
+                int v = fileInputstream.read(byteArray, 0, bytePerSample);
+                value = (int) convertToFloat(byteArray,1);
+                dataVector.add(value);
+                if (v == -1) break;
+            }
+            int data [] = new int[dataVector.size()];
+            for(int i=0;i<dataVector.size();i++){
+                data[i] = dataVector.get(i);
+            }
+            // System.out.println("Total data bytes "+sum);
+            return data;
+        }
+        catch (Exception e){
+            System.out.println("Error: "+e);
+            int[] f = new int[1];
+            return f;
+        }
+    }
+
+
+    public static byte[] ShortArray2ByteArray(short[] values){
+        ByteBuffer buffer = ByteBuffer.allocate(2 * values.length);
+        buffer.order(LITTLE_ENDIAN); // data must be in little endian format
+        for (short value : values){
+            buffer.putShort(value);
+        }
+        buffer.rewind();
+        return buffer.array();
+    }
+
+
+    public static void checkExternalMedia(){
+        boolean mExternalStorageAvailable = false;
+        boolean mExternalStorageWriteable = false;
+        String state = Environment.getExternalStorageState();
+
+        if (Environment.MEDIA_MOUNTED.equals(state)) {
+            // Can read and write the media
+            mExternalStorageAvailable = mExternalStorageWriteable = true;
+        } else if (Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
+            // Can only read the media
+            mExternalStorageAvailable = true;
+            mExternalStorageWriteable = false;
+        } else {
+            // Can't read or write
+            mExternalStorageAvailable = mExternalStorageWriteable = false;
+        }
+        System.out.println("\n\nExternal Media: readable="
+                +mExternalStorageAvailable+" writable="+mExternalStorageWriteable);
+    }
+
+
+    public  void WriteCleanAudioWav(Context context, String newFileName, short[] wavData) throws Exception{
+
+        File dir = null;
+        try{
+            checkExternalMedia();
+            File root = android.os.Environment.getExternalStorageDirectory();
+            System.out.println("\nExternal file system root: "+root);
+            dir = new File (root.getAbsolutePath() + "/watermarked");
+            if (dir.exists() == false){
+                dir.mkdirs();
+                System.out.println("Directory created");
+                System.out.println(dir);
+            }
+            else{
+                System.out.println("Directory exists");
+                System.out.println(dir);
+            }
+        }
+        catch (Exception e){
+            System.out.println("Error "+e);
+        }
+        try {
+            File file = new File(dir, "new_song.wav");
+            if (file.exists()) {
+                System.out.println("YES file exists");
+            }
+            //System.out.println(file);
+            OutputStream os;
+            //System.out.println(newFileName);
+            os = new FileOutputStream(file);
+            BufferedOutputStream bos = new BufferedOutputStream(os);
+            DataOutputStream outFile = new DataOutputStream(bos);
+
+            try {
+                long mySubChunk1Size = subChunk1Size;
+                int myBitsPerSample= bitsPerSample;
+                int myFormat = audioFomart;
+                long myChannels = numChannels;
+                long mySampleRate = sampleRate;
+                long myByteRate = mySampleRate * myChannels * myBitsPerSample/8;
+                int myBlockAlign = (int) (myChannels * myBitsPerSample/8);
+                // System.out.println("Ei porjonto completed");
+                byte clipData[] =  ShortArray2ByteArray(wavData);
+                // System.out.println("Ei porjonto completed 1");
+                long myDataSize = clipData.length;
+                long myChunk2Size =  myDataSize * myChannels * myBitsPerSample/8;
+                long myChunkSize = 36 + myChunk2Size;
+
+                outFile.writeBytes("RIFF");  // 00 - RIFF
+                outFile.writeInt(Integer.reverseBytes((int)myChunkSize)); // 04 - how big is the rest of this file?
+                outFile.writeBytes("WAVE");                                 // 08 - WAVE
+                outFile.writeBytes("fmt ");                                 // 12 - fmt
+                outFile.writeInt(Integer.reverseBytes((int)mySubChunk1Size));  // 16 - size of this chunk
+                outFile.writeShort(Short.reverseBytes((short)myFormat));     // 20 - what is the audio format? 1 for PCM = Pulse Code Modulation
+                outFile.writeShort(Short.reverseBytes((short)myChannels));   // 22 - mono or stereo? 1 or 2?  (or 5 or ???)
+                outFile.writeInt(Integer.reverseBytes((int)mySampleRate));     // 24 - samples per second (numbers per second)
+                outFile.writeInt(Integer.reverseBytes((int)myByteRate));       // 28 - bytes per second
+                outFile.writeShort(Short.reverseBytes((short)myBlockAlign)); // 32 - # of bytes in one sample, for all channels
+                outFile.writeShort(Short.reverseBytes((short)myBitsPerSample));  // 34 - how many bits in a sample(number)?  usually 16 or 24
+                outFile.writeBytes("data");                                 // 36 - data
+                outFile.writeInt(Integer.reverseBytes((int)myDataSize));       // 40 - how big is this data chunk
+                outFile.write(clipData);
+                System.out.println("File creation complete");
+            }
+            catch (Exception e){
+                System.out.println("Error "+e);
+
+            }
+            outFile.flush();
+            outFile.close();
+        }
+        catch (Exception e){
+            System.out.println("Error: "+e);
+        }
+    }
+
+    public static short[] float32ToInt16(int arr[]){
+
+        short int16Arr[] = new short [arr.length];
+        for(int i=0; i<arr.length; i++){
+            if(arr[i]<0) {
+                if (arr[i]>-1) {
+                    int16Arr[i] = 0;
+                }
+                else{
+                    int16Arr[i] = (short) Math.ceil((double)arr[i]);
+                }
+            }
+            else if (arr[i]>0){
+                int16Arr[i] = (short) Math.floor((double)arr[i]);
+            }
+            else{
+                int16Arr[i] = 0;
+            }
+        }
+        return int16Arr;
+    }
+
 }

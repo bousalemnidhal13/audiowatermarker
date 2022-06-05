@@ -34,6 +34,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -64,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     // declarations needed for watermarking methodes
+    private String tempExt = "";
     private static final int[] shiftNum = {1,3,7,15,31,63,127,255};
     public static final String MARKER = "@RM";
     public static final int HEADER_LENGTH = MARKER.length() * 8 + 32 + 32 + 8 + 16 + 8 + 8;
@@ -79,7 +81,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     // android views declaration
-    ImageView messageImageview;
 
     TextView titleTextView;
     TextView durationTextView;
@@ -112,7 +113,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // associate java fields with xml views
-        messageImageview = findViewById(R.id.messageImageview);
 
         titleTextView = findViewById(R.id.titleTextView);;
         durationTextView = findViewById(R.id.durationTextView);
@@ -257,6 +257,8 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == PICK_WATERMARK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
 
+                ImageView messageImageview = (ImageView) findViewById(R.id.messageImageview);
+
                 Uri audioWUri = data.getData();
                 String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioWUri);
 
@@ -266,18 +268,16 @@ public class MainActivity extends AppCompatActivity {
                     byte[] message = extractWatermark(int16);
 
                     System.out.println(Arrays.toString(message));
+                    System.out.println(message.length);
 
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(message, 0, message.length);
-                    messageImageview = (ImageView) findViewById(R.id.messageImageview);
-                    messageImageview.setImageBitmap(Bitmap.createScaledBitmap(bitmap, messageImageview.getWidth(),
-                            messageImageview.getHeight(), false));
+                    Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
 
+                    // messageImageview.setImageBitmap();
 
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
 
             }
         }
@@ -292,6 +292,8 @@ public class MainActivity extends AppCompatActivity {
                 // try to get image from uri
                 try {
 
+                    ImageView messageImageview = (ImageView) findViewById(R.id.messageImageview);
+
                     // get bitmap(image) from uri
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
@@ -299,6 +301,11 @@ public class MainActivity extends AppCompatActivity {
                     ByteArrayOutputStream stream = new ByteArrayOutputStream();
                     bitmap.compress(Bitmap.CompressFormat.PNG, 70, stream);
                     byte[] message = stream.toByteArray();
+
+                    messageImageview.setImageBitmap(BitmapFactory.decodeByteArray(message, 0, message.length));
+
+                    System.out.println(Arrays.toString(message));
+                    System.out.println(message.length);
 
 
                     // TODO : new approach !!!
@@ -316,10 +323,14 @@ public class MainActivity extends AppCompatActivity {
                     String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
                     int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
 
+                    System.out.println(Arrays.toString(audioData));
+
                     int16 = float32ToInt16(applyWatermark(audioData, message));
 
-                    WriteCleanAudioWav(this, "new_song.wav", int16);
                     System.out.println(Arrays.toString(int16));
+
+                    WriteCleanAudioWav(this, "new_song.wav", int16);
+
 
                     Toast toast = Toast.makeText(getApplicationContext(), "Watermark inserted and saved", Toast.LENGTH_LONG);
                     toast.show();
@@ -427,16 +438,16 @@ public class MainActivity extends AppCompatActivity {
 
 
     // the methode for inserting the watermark
-    public static int[] applyWatermark(int[] audioSamples, byte[] message) {
+    public int[] applyWatermark(int[] audioSamples, byte[] message) {
 
         int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
-        int shiftNumber = shiftNum[LSBUSed-1];
+        int shiftNumber = this.shiftNum[LSBUSed-1];
         int[] newSample = new int[audioSamples.length];
         int offset = 0;
 
         // write marker to audio samples
-        for (int i=0;i<MARKER.length();i++){
-            int kar = MARKER.charAt(i);
+        for (int i=0;i<this.MARKER.length();i++){
+            int kar = this.MARKER.charAt(i);
             for (int j=0;j<8;j++){
                 int bitExtract = kar & 1;
                 newSample[offset] = audioSamples[offset] & ~1;
@@ -459,6 +470,59 @@ public class MainActivity extends AppCompatActivity {
         }
         // end write length message --- next offset = 56
         //System.out.println("next:" + offset);
+
+        //write file message extension
+        String ext = "png";
+        byte[] extArray = ext.getBytes();
+        for (int i=0;i<extArray.length;i++){
+            for (int j=0;j<8;j++){
+                int bitExtract = extArray[i] & 1;
+                newSample[offset] = audioSamples[offset] & ~1;
+                newSample[offset] |= bitExtract;
+                extArray[i] >>= 1;
+                offset++;
+            }
+        }
+
+        //write method off = 88
+        int method = 1; // Integer.parseInt((String) this.properties.get("method"));
+        for (int j=0;j<8;j++){
+            int bitExtract = method & 1;
+            newSample[offset] = audioSamples[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            method >>= 1;
+            offset++;
+        }
+
+        //write lsb off 96
+        int lsb = 1; // Integer.parseInt((String) this.properties.get("lsb"));
+        for (int j=0;j<16;j++){
+            int bitExtract = lsb & 1;
+            newSample[offset] = audioSamples[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            lsb >>= 1;
+            offset++;
+        }
+
+        //write is compress? off 112
+        int compress = 1; // Integer.parseInt((String) this.properties.get("compress"));
+        for (int j=0;j<8;j++){
+            int bitExtract = compress & 1;
+            newSample[offset] = audioSamples[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            compress >>= 1;
+            offset++;
+        }
+
+        //write is encrypt? off 120
+        int encrypt = 1; // Integer.parseInt((String) this.properties.get("encrypt"));
+        for (int j=0;j<8;j++){
+            int bitExtract = encrypt & 1;
+            newSample[offset] = audioSamples[offset] & ~1;
+            newSample[offset] |= bitExtract;
+            encrypt >>= 1;
+            offset++;
+        }
 
 
         // write message
@@ -490,8 +554,8 @@ public class MainActivity extends AppCompatActivity {
                 offset++;
                 byteExtract = 0;
                 bitRem = 0;
-            }else if(bitRem == lastBit && (offset-(HEADER_LENGTH-1)) == length2) {
-                newSample[offset] = audioSamples[offset] & ~ shiftNum[lastBit];
+            }else if(bitRem == lastBit && (offset-(this.HEADER_LENGTH-1)) == length2) {
+                newSample[offset] = audioSamples[offset] & ~ this.shiftNum[lastBit];
                 newSample[offset] |= byteExtract;
                 offset++;
                 byteExtract = 0;
@@ -525,18 +589,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // the methode for extracting the watermark
-    public static byte[] extractWatermark(short[] audioSamples) {
+    public byte[] extractWatermark(short[] audioSamples) {
 
         int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
-        int shiftNumber = shiftNum[LSBUSed-1];
+        int shiftNumber = this.shiftNum[LSBUSed-1];
 
         int byteExtract = 0;
         int bitDiambil=0;
-        // this.tempExt = (String) this.properties.get("ext");
 
         int startIndex = 128;
 
-        int numByte = 1000000;//lengthMessage * LSBUSed / 8;
+        int numByte = audioSamples.length * LSBUSed / 8; // Integer.parseInt((String) this.properties.get("msgSize"));// lengthMessage * LSBUSed / 8;
         byte[] message = new byte[numByte];
 
         int i = 0;
@@ -817,6 +880,22 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         return int16Arr;
+    }
+
+    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        final int height = options.outHeight;
+        final int width = options.outWidth;
+        int inSampleSize = 1;
+
+        if (height > reqHeight || width > reqWidth) {
+            final int halfHeight = height / 2;
+            final int halfWidth = width / 2;
+            while ((halfHeight / inSampleSize) >= reqHeight
+                    && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2;
+            }
+        }
+        return inSampleSize;
     }
 
 }

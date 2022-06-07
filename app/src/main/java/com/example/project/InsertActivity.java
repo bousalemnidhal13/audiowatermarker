@@ -19,7 +19,6 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.AudioAttributes;
-import android.media.Image;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Build;
@@ -34,7 +33,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -52,7 +50,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 
-public class MainActivity extends AppCompatActivity {
+public class InsertActivity extends AppCompatActivity {
 
 
 
@@ -65,7 +63,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     // declarations needed for watermarking methodes
-    private String tempExt = "";
     private static final int[] shiftNum = {1,3,7,15,31,63,127,255};
     public static final String MARKER = "@RM";
     public static final int HEADER_LENGTH = MARKER.length() * 8 + 32 + 32 + 8 + 16 + 8 + 8;
@@ -81,20 +78,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     // android views declaration
-
     TextView titleTextView;
+    TextView titleTextView2;
     TextView durationTextView;
+    TextView durationTextView2;
 
     Button pickFileButton;
     Button playButton;
+    Button playButton2;
     Button insertButton;
-    Button extractButton;
-    Button analyzeButton;
 
     SeekBar audioSeekbar;
+    SeekBar audioSeekbar2;
+
 
     String duration;
+    String duration2;
     MediaPlayer mediaPlayer;
+    MediaPlayer mediaPlayer2;
     ScheduledExecutorService timer;
 
     // for intent result
@@ -103,27 +104,26 @@ public class MainActivity extends AppCompatActivity {
     public static final int PICK_WATERMARK_AUDIO = 97;
 
 
-    // convert byte data to number
-
-
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_insert);
 
         // associate java fields with xml views
 
-        titleTextView = findViewById(R.id.titleTextView);;
+        titleTextView = findViewById(R.id.titleTextView);
+        titleTextView2 = findViewById(R.id.titleTextView2);
         durationTextView = findViewById(R.id.durationTextView);
+        durationTextView2 = findViewById(R.id.durationTextView2);
 
         pickFileButton = findViewById(R.id.pickFileButton);
         playButton = findViewById(R.id.playButton);
+        playButton2 = findViewById(R.id.playButton2);
         insertButton = findViewById(R.id.insertButton);
-        extractButton = findViewById(R.id.extractButton);
-        analyzeButton = findViewById(R.id.analyzeButton);
 
         audioSeekbar = findViewById(R.id.audioSeekbar);
+        audioSeekbar2 = findViewById(R.id.audioSeekbar2);
+
 
         // listener for picking an audio file
         pickFileButton.setOnClickListener(new View.OnClickListener() {
@@ -164,6 +164,33 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        playButton2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (mediaPlayer2 != null) {
+                    if (mediaPlayer2.isPlaying()) {
+                        mediaPlayer2.pause();
+                        playButton2.setText("PLAY");
+                        timer.shutdown();
+                    } else {
+                        mediaPlayer2.start();
+                        playButton2.setText("PAUSE");
+                        timer = Executors.newScheduledThreadPool(1);
+                        timer.scheduleAtFixedRate(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (mediaPlayer2 != null) {
+                                    if (!audioSeekbar2.isPressed()) {
+                                        audioSeekbar2.setProgress(mediaPlayer2.getCurrentPosition());
+                                    }
+                                }
+                            }
+                        }, 10, 10, TimeUnit.MILLISECONDS);
+                    }
+                }
+            }
+        });
+
         // listener for picking an image for the inserting methode
         insertButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -175,32 +202,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-
-        // listener for the extracting methode
-        extractButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                intent.setType("audio/*");
-                startActivityForResult(intent, PICK_WATERMARK_AUDIO);
-
-            }
-        });
-
-        // listener for the analyze methode
-        analyzeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-                Toast toast = Toast.makeText(getApplicationContext(), "Use analyze watermark methode here", Toast.LENGTH_LONG);
-                toast.show();
-
-
-                // analyzeWatermark(Uri audioUri);  Analyzing methode call...
-            }
-        });
 
         // audio player seekbar
         audioSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -215,6 +216,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
 
@@ -228,10 +230,36 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // audio player seekbar 2
+        audioSeekbar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                if (mediaPlayer2 != null) {
+                    int millis = mediaPlayer2.getCurrentPosition();
+                    long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
+                    long mins = TimeUnit.MINUTES.convert(total_secs, TimeUnit.SECONDS);
+                    long secs = total_secs - (mins * 60);
+                    durationTextView2.setText(mins + ":" + secs + " / " + duration);
+                }
+            }
+
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                if (mediaPlayer2 != null) {
+                    mediaPlayer2.seekTo(audioSeekbar2.getProgress());
+                }
+            }
+        });
+
         // turn off the buttons for the moment
         playButton.setEnabled(false);
-        analyzeButton.setEnabled(false);
-        // extractButton.setEnabled(false);
+        playButton2.setEnabled(false);
         insertButton.setEnabled(false);
 
     }
@@ -253,34 +281,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        // get watermarked audio uri
-        if (requestCode == PICK_WATERMARK_AUDIO && resultCode == RESULT_OK) {
-            if (data != null) {
-
-                ImageView messageImageview = (ImageView) findViewById(R.id.messageImageview);
-
-                Uri audioWUri = data.getData();
-                String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioWUri);
-
-                try {
-                    int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
-                    short[] int16 = float32ToInt16(audioData);
-                    byte[] message = extractWatermark(int16);
-
-                    System.out.println(Arrays.toString(message));
-                    System.out.println(message.length);
-
-                    Bitmap bmp = BitmapFactory.decodeByteArray(message, 0, message.length);
-
-                    // messageImageview.setImageBitmap();
-
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-
-            }
-        }
 
         // get image uri
         if (requestCode == PICK_IMAGE && resultCode == RESULT_OK){
@@ -292,8 +292,6 @@ public class MainActivity extends AppCompatActivity {
                 // try to get image from uri
                 try {
 
-                    ImageView messageImageview = (ImageView) findViewById(R.id.messageImageview);
-
                     // get bitmap(image) from uri
                     bitmap = MediaStore.Images.Media.getBitmap(this.getContentResolver(), imageUri);
 
@@ -302,7 +300,6 @@ public class MainActivity extends AppCompatActivity {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 70, stream);
                     byte[] message = stream.toByteArray();
 
-                    messageImageview.setImageBitmap(BitmapFactory.decodeByteArray(message, 0, message.length));
 
                     System.out.println(Arrays.toString(message));
                     System.out.println(message.length);
@@ -331,8 +328,11 @@ public class MainActivity extends AppCompatActivity {
 
                     WriteCleanAudioWav(this, "new_song.wav", int16);
 
+                    File root = android.os.Environment.getExternalStorageDirectory();
+                    createMediaPlayer2(Uri.fromFile(new File(root.getAbsolutePath() + "/watermarked/new_song.wav")));
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "Watermark inserted and saved", Toast.LENGTH_LONG);
+
+                    Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK INSERTED AND SAVED", Toast.LENGTH_LONG);
                     toast.show();
 
                 } catch (Exception e) {
@@ -343,7 +343,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // create media player for the audio selected
+    // create media player 1 for the audio selected
     public void createMediaPlayer(Uri uri) {
         mediaPlayer = new MediaPlayer();
         mediaPlayer.setAudioAttributes(
@@ -360,7 +360,6 @@ public class MainActivity extends AppCompatActivity {
             titleTextView.setText(getNameFromUri(uri));
             playButton.setEnabled(true);
             insertButton.setEnabled(true);
-            analyzeButton.setEnabled(true);
 
             int millis = mediaPlayer.getDuration();
             long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
@@ -385,6 +384,49 @@ public class MainActivity extends AppCompatActivity {
             titleTextView.setText(e.toString());
         }
     }
+
+
+    // create media player 2 for the audio selected
+    public void createMediaPlayer2(Uri uri) {
+        mediaPlayer2 = new MediaPlayer();
+        mediaPlayer2.setAudioAttributes(
+                new AudioAttributes.Builder()
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .build()
+        );
+
+        try {
+            mediaPlayer2.setDataSource(getApplicationContext(), uri);
+            mediaPlayer2.prepare();
+
+            titleTextView2.setText(getNameFromUri(uri));
+            playButton2.setEnabled(true);
+
+            int millis = mediaPlayer2.getDuration();
+            long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
+            long mins = TimeUnit.MINUTES.convert(total_secs, TimeUnit.SECONDS);
+            long secs = total_secs - (mins * 60);
+
+            duration2 = mins + ":" + secs;
+
+            durationTextView2.setText(("00:00 / " + duration2));
+
+            audioSeekbar2.setMax(millis);
+            audioSeekbar2.setProgress(0);
+
+            mediaPlayer2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mediaPlayer) {
+                    releaseMediaPlayer();
+                }
+            });
+
+        } catch (IOException e) {
+            titleTextView2.setText(e.toString());
+        }
+    }
+
 
     // get the name of the audio selected
     @SuppressLint("Range")
@@ -426,14 +468,13 @@ public class MainActivity extends AppCompatActivity {
             mediaPlayer = null;
         }
         playButton.setEnabled(false);
-        analyzeButton.setEnabled(false);
-        // extractButton.setEnabled(false);
         insertButton.setEnabled(false);
 
         titleTextView.setText("Title");
         durationTextView.setText("00:00 / 00:00");
         audioSeekbar.setMax(100);
         audioSeekbar.setProgress(0);
+
     }
 
 
@@ -588,76 +629,6 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    // the methode for extracting the watermark
-    public byte[] extractWatermark(short[] audioSamples) {
-
-        int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
-        int shiftNumber = this.shiftNum[LSBUSed-1];
-
-        int byteExtract = 0;
-        int bitDiambil=0;
-
-        int startIndex = 128;
-
-        int numByte = audioSamples.length * LSBUSed / 8; // Integer.parseInt((String) this.properties.get("msgSize"));// lengthMessage * LSBUSed / 8;
-        byte[] message = new byte[numByte];
-
-        int i = 0;
-        int bitRem = 0;
-
-        while(i<numByte){
-            int bitExtract = audioSamples[startIndex] & 1;
-            audioSamples[startIndex] >>=1;
-            bitDiambil++;
-            byteExtract |= bitExtract << bitRem;
-            bitRem++;
-
-            if (bitDiambil >=LSBUSed){
-                startIndex++;
-                bitDiambil = 0;
-            }
-            if (bitRem >=8){
-                message[i] = (byte) byteExtract;
-                i++;
-                bitRem = 0;
-                byteExtract = 0;
-            }
-
-            if (startIndex >= audioSamples.length)
-                break;
-
-        }
-        return message;
-
-    }
-
-    // the methode for analyzing the watermark
-    public boolean isContainedWatermark() {
-        byte[] dataHead = new byte[MARKER.length()];
-
-        int startIndex = 0;
-        for (int i=0;i<dataHead.length;i++){
-            int charEx = 0;
-            for (int j=0;j<8;j++){
-                int bitExtract = dataHeader[startIndex] & 1;
-                charEx |= bitExtract << j;
-                startIndex++;
-            }
-            dataHead[i] = (byte) charEx;
-        }
-        String head = new String(dataHead);
-        System.out.println(head);
-        if (head.equals(MARKER))
-            return true;
-        else
-            return false;
-    }
-
-
-    public static Bitmap byteToBitmap(byte[] b) {
-        return (b == null || b.length == 0) ? null : BitmapFactory
-                .decodeByteArray(b, 0, b.length);
-    }
 
 
     public static ByteBuffer ByteArrayToNumber(byte bytes[], int numOfBytes, int type){
@@ -674,7 +645,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // convert data to float
     public static float convertToFloat(byte[] array, int type) {
         ByteBuffer buffer = ByteBuffer.wrap(array);
         if (type == 1){
@@ -684,7 +654,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // Methode to read the audio file
     public int[] ReadingAudioFile(String audioFile) throws IOException {
 
         try {
@@ -860,6 +829,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     public static short[] float32ToInt16(int arr[]){
 
         short int16Arr[] = new short [arr.length];
@@ -882,20 +852,5 @@ public class MainActivity extends AppCompatActivity {
         return int16Arr;
     }
 
-    public static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int height = options.outHeight;
-        final int width = options.outWidth;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            final int halfHeight = height / 2;
-            final int halfWidth = width / 2;
-            while ((halfHeight / inSampleSize) >= reqHeight
-                    && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2;
-            }
-        }
-        return inSampleSize;
-    }
 
 }

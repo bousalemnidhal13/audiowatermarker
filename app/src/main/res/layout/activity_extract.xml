@@ -5,28 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/bg"
-    tools:context=".MainActivity">
-
+    tools:context=".ExtractActivity">
 
     <Button
-        android:id="@+id/pickFileButton"
+        android:id="@+id/pickFileButtonE"
+        android:layout_margin="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/pick_button"
         android:textColor="@color/button_textColor"
-        app:layout_constraintBottom_toTopOf="@id/playerLinear"
+        app:layout_constraintBottom_toTopOf="@id/playerLinearE"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/recordButton"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Button
-        android:id="@+id/recordButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/record_button"
-        android:textColor="@color/button_textColor"
-        app:layout_constraintBottom_toTopOf="@id/playerLinear"
-        app:layout_constraintEnd_toStartOf="@id/pickFileButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -36,30 +25,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:layout_marginBottom="280dp"
-        app:layout_constraintTop_toBottomOf="@id/playerLinear"
+        android:layout_marginBottom="300dp"
+        app:layout_constraintTop_toBottomOf="@id/playerLinearE"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <Button
-            android:id="@+id/analyzeButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:textColor="@color/button_textColor"
-            android:text="@string/analyze_button"/>
 
         <Button
-            android:id="@+id/insertButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:textColor="@color/button_textColor"
-            android:text="@string/insert_button" />
-
-        <Button
-            android:id="@+id/extractButton"
+            android:id="@+id/extractButtonE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
@@ -69,7 +43,7 @@
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/playerLinear"
+        android:id="@+id/playerLinearE"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
@@ -82,21 +56,21 @@
         app:layout_constraintBottom_toTopOf="@id/watermarkingLinear">
 
         <TextView
-            android:id="@+id/titleTextView"
+            android:id="@+id/titleTextViewE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/title_textView"
             android:textSize="18sp" />
 
         <SeekBar
-            android:id="@+id/audioSeekbar"
+            android:id="@+id/audioSeekbarE"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:max="100"
             android:padding="10dp" />
 
         <TextView
-            android:id="@+id/durationTextView"
+            android:id="@+id/durationTextViewE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10sp"
@@ -104,7 +78,7 @@
             android:textSize="20dp" />
 
         <Button
-            android:id="@+id/playButton"
+            android:id="@+id/playButtonE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="@color/button_textColor"
@@ -112,14 +86,14 @@
 
     </LinearLayout>
 
+
     <ImageView
-        android:id="@+id/messageImageview"
-        android:layout_width="300dp"
-        android:layout_height="300dp"
+        android:id="@+id/messageImageviewE"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/watermarkingLinear" />
-
+        app:layout_constraintTop_toBottomOf="@id/watermarkingLinear"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

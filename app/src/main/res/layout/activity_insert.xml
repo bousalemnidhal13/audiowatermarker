@@ -13,7 +13,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/pick_button"
-        android:textColor="@color/button_textColor"
+        android:background="@drawable/custom_button"
+        android:textColor="#FFFFFF"
         app:layout_constraintBottom_toTopOf="@id/playerLinear"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +36,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:textColor="@color/button_textColor"
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"
             android:text="@string/insert_button" />
 
     </LinearLayout>
@@ -63,6 +65,7 @@
             android:id="@+id/audioSeekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:outlineAmbientShadowColor="#00fff5"
             android:max="100"
             android:padding="10dp" />
 
@@ -78,8 +81,9 @@
             android:id="@+id/playButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="@drawable/custom_button"
             android:text="@string/play_button"
-            android:textColor="@color/button_textColor" />
+            android:textColor="#FFFFFF"/>
 
     </LinearLayout>
 
@@ -107,6 +111,7 @@
             android:id="@+id/audioSeekbar2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:outlineAmbientShadowColor="#00fff5"
             android:max="100"
             android:padding="10dp" />
 
@@ -123,7 +128,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/play_button"
-            android:textColor="@color/button_textColor" />
+            android:textColor="#FFFFFF"
+            android:background="@drawable/custom_button"/>
 
     </LinearLayout>
 

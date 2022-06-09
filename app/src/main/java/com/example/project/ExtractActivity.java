@@ -203,6 +203,7 @@ public class ExtractActivity extends AppCompatActivity {
 
 
         extractButton.setEnabled(false);
+        playButton.setEnabled(false);
     }
 
     @Override

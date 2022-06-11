@@ -37,6 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import rm.com.audiowave.AudioWaveView;
+
 public class ExtractActivity extends AppCompatActivity {
 
 
@@ -64,6 +66,8 @@ public class ExtractActivity extends AppCompatActivity {
 
     SeekBar audioSeekbar;
 
+    AudioWaveView waveView;
+
     MediaPlayer mediaPlayer;
     String duration;
     ScheduledExecutorService timer;
@@ -86,6 +90,8 @@ public class ExtractActivity extends AppCompatActivity {
         durationTextView = findViewById(R.id.durationTextViewE);
 
         audioSeekbar = findViewById(R.id.audioSeekbarE);
+
+        waveView = findViewById(R.id.waveE);
 
         messageImageview = findViewById(R.id.messageImageviewE);
 
@@ -203,7 +209,6 @@ public class ExtractActivity extends AppCompatActivity {
 
 
         extractButton.setEnabled(false);
-        playButton.setEnabled(false);
     }
 
     @Override
@@ -220,7 +225,14 @@ public class ExtractActivity extends AppCompatActivity {
 
                 extractButton.setEnabled(true);
                 audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
-
+                int[] audioData = new int[0];
+                try {
+                    audioData = ReadingAudioFile(audioFileAbsolutePath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                short[] int16 = float32ToInt16(audioData);
+                waveView.setScaledData(ShortArray2ByteArray(int16));
             }
         }
     }
@@ -545,6 +557,16 @@ public class ExtractActivity extends AppCompatActivity {
             newArr[i + 1] = arr[i];
         }
         return newArr;
+    }
+
+    public static byte[] ShortArray2ByteArray(short[] values){
+        ByteBuffer buffer = ByteBuffer.allocate(2 * values.length);
+        buffer.order(LITTLE_ENDIAN); // data must be in little endian format
+        for (short value : values){
+            buffer.putShort(value);
+        }
+        buffer.rewind();
+        return buffer.array();
     }
 
 }

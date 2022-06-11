@@ -50,7 +50,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import rm.com.audiowave.AudioWaveView;
-import rm.com.audiowave.OnProgressListener;
 
 
 public class InsertActivity extends AppCompatActivity {
@@ -83,20 +82,19 @@ public class InsertActivity extends AppCompatActivity {
     // android views declaration
     TextView titleTextView;
     TextView titleTextView2;
-
-    TextView durationTextView2;
     TextView durationTextView;
+    TextView durationTextView2;
 
     Button pickFileButton;
     Button playButton;
     Button playButton2;
     Button insertButton;
 
-    AudioWaveView waveView;
-
     SeekBar audioSeekbar;
     SeekBar audioSeekbar2;
 
+    AudioWaveView waveView;
+    AudioWaveView waveView2;
 
     String duration;
     String duration2;
@@ -131,6 +129,7 @@ public class InsertActivity extends AppCompatActivity {
         audioSeekbar2 = findViewById(R.id.audioSeekbar2);
 
         waveView = findViewById(R.id.wave);
+        waveView2 = findViewById(R.id.wave2);
 
 
         // listener for picking an audio file
@@ -143,7 +142,6 @@ public class InsertActivity extends AppCompatActivity {
                 startActivityForResult(intent, PICK_AUDIO);
             }
         });
-
 
         // listener for playing the audio file
         playButton.setOnClickListener(new View.OnClickListener() {
@@ -173,7 +171,6 @@ public class InsertActivity extends AppCompatActivity {
             }
         });
 
-
         playButton2.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -201,7 +198,6 @@ public class InsertActivity extends AppCompatActivity {
             }
         });
 
-
         // listener for picking an image for the inserting methode
         insertButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -213,6 +209,8 @@ public class InsertActivity extends AppCompatActivity {
             }
         });
 
+
+        // audio player seekbar
         audioSeekbar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
@@ -239,7 +237,6 @@ public class InsertActivity extends AppCompatActivity {
             }
         });
 
-
         // audio player seekbar 2
         audioSeekbar2.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -249,7 +246,7 @@ public class InsertActivity extends AppCompatActivity {
                     long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
                     long mins = TimeUnit.MINUTES.convert(total_secs, TimeUnit.SECONDS);
                     long secs = total_secs - (mins * 60);
-                    durationTextView2.setText(mins + ":" + secs + " / " + duration2);
+                    durationTextView2.setText(mins + ":" + secs + " / " + duration);
                 }
             }
 
@@ -267,7 +264,7 @@ public class InsertActivity extends AppCompatActivity {
             }
         });
 
-
+        // turn off the buttons for the moment
         playButton.setEnabled(false);
         playButton2.setEnabled(false);
         insertButton.setEnabled(false);
@@ -289,10 +286,11 @@ public class InsertActivity extends AppCompatActivity {
                 createMediaPlayer(audioUri);
 
                 String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
-
                 try {
                     int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
-                    waveView.setScaledData(ShortArray2ByteArray(float32ToInt16(audioData)));
+                    int16 = float32ToInt16(audioData);
+                    waveView.setScaledData(ShortArray2ByteArray(int16));
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -340,10 +338,9 @@ public class InsertActivity extends AppCompatActivity {
                     int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
 
                     System.out.println(Arrays.toString(audioData));
-
                     int16 = float32ToInt16(applyWatermark(audioData, message));
-
                     System.out.println(Arrays.toString(int16));
+                    waveView2.setScaledData(ShortArray2ByteArray(int16));
 
                     WriteCleanAudioWav(this, "new_song.wav", int16);
 
@@ -389,6 +386,7 @@ public class InsertActivity extends AppCompatActivity {
 
             durationTextView.setText(("00:00 / " + duration));
 
+            audioSeekbar.setMax(millis);
             audioSeekbar.setProgress(0);
 
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
@@ -489,6 +487,8 @@ public class InsertActivity extends AppCompatActivity {
         insertButton.setEnabled(false);
 
         titleTextView.setText("Title");
+        durationTextView.setText("00:00 / 00:00");
+        audioSeekbar.setMax(100);
         audioSeekbar.setProgress(0);
 
     }

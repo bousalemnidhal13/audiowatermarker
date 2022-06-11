@@ -20,25 +20,19 @@
 
         <Button
             android:id="@+id/InsertWatermark"
-            android:layout_margin="15dp"
+            android:layout_margin="50dp"
             android:layout_width="200dp"
             android:layout_height="100dp"
-            android:textSize="20dp"
-            android:background="@drawable/custom_button"
             android:text="Insert Watermark"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"/>
+            android:textColor="@color/button_textColor" />
 
         <Button
             android:id="@+id/ExtractWatermark"
-            android:layout_margin="15dp"
+            android:layout_margin="50dp"
             android:layout_width="200dp"
             android:layout_height="100dp"
-            android:textSize="20dp"
-            android:background="@drawable/custom_button"
             android:text="Extract Watermark"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"/>
+            android:textColor="@color/button_textColor"/>
 
     </LinearLayout>
 

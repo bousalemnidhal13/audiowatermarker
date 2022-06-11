@@ -12,9 +12,8 @@
         android:layout_margin="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/custom_button"
         android:text="@string/pick_button"
-        android:textColor="#FFFFFF"
+        android:textColor="@color/button_textColor"
         app:layout_constraintBottom_toTopOf="@id/playerLinearE"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -37,9 +36,8 @@
             android:id="@+id/extractButtonE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/custom_button"
             android:layout_margin="10dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/button_textColor"
             android:text="@string/extract_button" />
 
     </LinearLayout>
@@ -64,11 +62,25 @@
             android:text="@string/title_textView"
             android:textSize="18sp" />
 
+        <rm.com.audiowave.AudioWaveView
+            android:id="@+id/waveE"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_margin="16dp"
+            app:animateExpansion="false"
+            app:chunkWidth="3dp"
+            app:chunkHeight="24dp"
+            app:minChunkHeight="2dp"
+            app:chunkSpacing="1dp"
+            app:chunkRadius="1dp"
+            app:touchable="false"
+            app:waveColor="@android:color/white"
+            />
+
         <SeekBar
             android:id="@+id/audioSeekbarE"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:outlineAmbientShadowColor="#00fff5"
             android:max="100"
             android:padding="10dp" />
 
@@ -82,10 +94,9 @@
 
         <Button
             android:id="@+id/playButtonE"
-            android:background="@drawable/custom_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/button_textColor"
             android:text="@string/play_button" />
 
     </LinearLayout>

@@ -339,17 +339,25 @@ public class InsertActivity extends AppCompatActivity {
 
                     System.out.println(Arrays.toString(audioData));
                     int16 = float32ToInt16(applyWatermark(audioData, message));
-                    System.out.println(Arrays.toString(int16));
-                    waveView2.setScaledData(ShortArray2ByteArray(int16));
 
-                    WriteCleanAudioWav(this, "new_song.wav", int16);
+                    if (int16.length == 0){
 
-                    File root = android.os.Environment.getExternalStorageDirectory();
-                    createMediaPlayer2(Uri.fromFile(new File(root.getAbsolutePath() + "/watermarked/new_song.wav")));
+                        Toast toast = Toast.makeText(getApplicationContext(), "ERROR, IMAGE SIZE TOO BIG", Toast.LENGTH_LONG);
+                        toast.show();
 
+                    } else {
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK INSERTED AND SAVED", Toast.LENGTH_LONG);
-                    toast.show();
+                        System.out.println(Arrays.toString(int16));
+                        waveView2.setScaledData(ShortArray2ByteArray(int16));
+
+                        WriteCleanAudioWav(this, "new_song.wav", int16);
+
+                        File root = android.os.Environment.getExternalStorageDirectory();
+                        createMediaPlayer2(Uri.fromFile(new File(root.getAbsolutePath() + "/watermarked/new_song.wav")));
+
+                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK INSERTED AND SAVED", Toast.LENGTH_LONG);
+                        toast.show();
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -501,6 +509,13 @@ public class InsertActivity extends AppCompatActivity {
         int shiftNumber = this.shiftNum[LSBUSed-1];
         int[] newSample = new int[audioSamples.length];
         int offset = 0;
+
+        if ((audioSamples.length * LSBUSed / 8) < message.length){
+            int[] error = new int[0];
+            System.out.println(Arrays.toString(error));
+            System.out.println(error.length);
+            return error;
+        }
 
         // write marker to audio samples
         for (int i=0;i<this.MARKER.length();i++){

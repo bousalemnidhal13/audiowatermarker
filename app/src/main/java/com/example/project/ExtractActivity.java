@@ -183,7 +183,7 @@ public class ExtractActivity extends AppCompatActivity {
                         writeToFile(trueMessage);
 
                         File sd = Environment.getExternalStorageDirectory();
-                        File image = new File(sd, "watermark.png");
+                        File image = new File(sd + "/watermarked", "watermark.png");
 
                         BitmapFactory.Options bmOptions = new BitmapFactory.Options();
                         Bitmap bmp = BitmapFactory.decodeFile(image.getAbsolutePath(), bmOptions);
@@ -538,7 +538,7 @@ public class ExtractActivity extends AppCompatActivity {
             checkExternalMedia();
             File root = android.os.Environment.getExternalStorageDirectory();
             String path = root.getAbsolutePath();
-            File file = new File(path + "/watermark.png");
+            File file = new File(path + "/watermarked/watermark.png");
 
             FileOutputStream stream = new FileOutputStream(file);
 

@@ -12,6 +12,7 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -49,6 +50,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import rm.com.audiowave.AudioWaveView;
+
 
 public class InsertActivity extends AppCompatActivity {
 
@@ -69,7 +72,7 @@ public class InsertActivity extends AppCompatActivity {
     private int[] dataHeader = new int[HEADER_LENGTH];
 
 
-    // uri for the audio file
+
     Uri audioUri;
 
     Bitmap bitmap;
@@ -91,6 +94,8 @@ public class InsertActivity extends AppCompatActivity {
     SeekBar audioSeekbar;
     SeekBar audioSeekbar2;
 
+    AudioWaveView waveView;
+    AudioWaveView waveView2;
 
     String duration;
     String duration2;
@@ -101,15 +106,12 @@ public class InsertActivity extends AppCompatActivity {
     // for intent result
     public static final int PICK_AUDIO = 99;
     public static final int PICK_IMAGE = 98;
-    public static final int PICK_WATERMARK_AUDIO = 97;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_insert);
-
-        // associate java fields with xml views
 
         titleTextView = findViewById(R.id.titleTextView);
         titleTextView2 = findViewById(R.id.titleTextView2);
@@ -123,6 +125,9 @@ public class InsertActivity extends AppCompatActivity {
 
         audioSeekbar = findViewById(R.id.audioSeekbar);
         audioSeekbar2 = findViewById(R.id.audioSeekbar2);
+
+        waveView = findViewById(R.id.wave);
+        waveView2 = findViewById(R.id.wave2);
 
 
         // listener for picking an audio file
@@ -274,10 +279,42 @@ public class InsertActivity extends AppCompatActivity {
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
 
+                playButton.setEnabled(false);
+                insertButton.setEnabled(false);
+
                 // create the media player from the data in the uri
                 audioUri = data.getData();
                 createMediaPlayer(audioUri);
 
+                String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
+
+                Toast tst = Toast.makeText(getApplicationContext(), "SAMPLING...", Toast.LENGTH_LONG);
+                tst.show();
+
+                // Background thread for reading the audio file
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        int[] audioData = new int[0];
+                        try {
+                            audioData = ReadingAudioFile(audioFileAbsolutePath);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        int16 = float32ToInt16(audioData);
+                        waveView.setScaledData(ShortArray2ByteArray(int16));
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast toast = Toast.makeText(getApplicationContext(), "DONE", Toast.LENGTH_LONG);
+                                toast.show();
+                                playButton.setEnabled(true);
+                                insertButton.setEnabled(true);
+                            }
+                        });
+                    }
+                }).start();
             }
         }
 
@@ -305,7 +342,6 @@ public class InsertActivity extends AppCompatActivity {
                     System.out.println(message.length);
 
 
-                    // TODO : new approach !!!
                     int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
                     if (permissionCheck == PackageManager.PERMISSION_GRANTED){
 
@@ -316,24 +352,57 @@ public class InsertActivity extends AppCompatActivity {
                         System.out.println("Second condition");
                     }
 
+                    Context context = this;
+
+                    Toast tst = Toast.makeText(getApplicationContext(), "INSERTING...", Toast.LENGTH_LONG);
+                    tst.show();
 
                     String audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
-                    int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
 
-                    System.out.println(Arrays.toString(audioData));
+                            int[] audioData = new int[0];
+                            try {
+                                audioData = ReadingAudioFile(audioFileAbsolutePath);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
 
-                    int16 = float32ToInt16(applyWatermark(audioData, message));
+                            System.out.println(Arrays.toString(audioData));
+                            int16 = float32ToInt16(applyWatermark(audioData, message));
 
-                    System.out.println(Arrays.toString(int16));
+                            if (int16.length == 0){
 
-                    WriteCleanAudioWav(this, "new_song.wav", int16);
+                                Toast toast = Toast.makeText(getApplicationContext(), "ERROR, IMAGE SIZE TOO BIG", Toast.LENGTH_LONG);
+                                toast.show();
 
-                    File root = android.os.Environment.getExternalStorageDirectory();
-                    createMediaPlayer2(Uri.fromFile(new File(root.getAbsolutePath() + "/watermarked/new_song.wav")));
+                            } else {
 
+                                System.out.println(Arrays.toString(int16));
+                                waveView2.setScaledData(ShortArray2ByteArray(int16));
 
-                    Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK INSERTED AND SAVED", Toast.LENGTH_LONG);
-                    toast.show();
+                                try {
+                                    WriteCleanAudioWav(context, "new_song.wav", int16);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+
+                                File root = android.os.Environment.getExternalStorageDirectory();
+                                createMediaPlayer2(Uri.fromFile(new File(root.getAbsolutePath() + "/watermarked/new_song.wav")));
+
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        playButton2.setEnabled(true);
+                                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK INSERTED AND SAVED", Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
+                                });
+
+                            }
+                        }
+                    }).start();
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -358,8 +427,6 @@ public class InsertActivity extends AppCompatActivity {
             mediaPlayer.prepare();
 
             titleTextView.setText(getNameFromUri(uri));
-            playButton.setEnabled(true);
-            insertButton.setEnabled(true);
 
             int millis = mediaPlayer.getDuration();
             long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
@@ -400,8 +467,12 @@ public class InsertActivity extends AppCompatActivity {
             mediaPlayer2.setDataSource(getApplicationContext(), uri);
             mediaPlayer2.prepare();
 
-            titleTextView2.setText(getNameFromUri(uri));
-            playButton2.setEnabled(true);
+            titleTextView2.post(new Runnable() {
+                @Override
+                public void run() {
+                    titleTextView2.setText(getNameFromUri(uri));
+                }
+            });
 
             int millis = mediaPlayer2.getDuration();
             long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
@@ -410,7 +481,12 @@ public class InsertActivity extends AppCompatActivity {
 
             duration2 = mins + ":" + secs;
 
-            durationTextView2.setText(("00:00 / " + duration2));
+            durationTextView2.post(new Runnable() {
+                @Override
+                public void run() {
+                    durationTextView2.setText(("00:00 / " + duration2));
+                }
+            });
 
             audioSeekbar2.setMax(millis);
             audioSeekbar2.setProgress(0);
@@ -423,7 +499,12 @@ public class InsertActivity extends AppCompatActivity {
             });
 
         } catch (IOException e) {
-            titleTextView2.setText(e.toString());
+            titleTextView2.post(new Runnable() {
+                @Override
+                public void run() {
+                    titleTextView2.setText(e.toString());
+                }
+            });
         }
     }
 
@@ -485,6 +566,13 @@ public class InsertActivity extends AppCompatActivity {
         int shiftNumber = this.shiftNum[LSBUSed-1];
         int[] newSample = new int[audioSamples.length];
         int offset = 0;
+
+        if ((audioSamples.length * LSBUSed / 8) < message.length){
+            int[] error = new int[0];
+            System.out.println(Arrays.toString(error));
+            System.out.println(error.length);
+            return error;
+        }
 
         // write marker to audio samples
         for (int i=0;i<this.MARKER.length();i++){
@@ -851,6 +939,5 @@ public class InsertActivity extends AppCompatActivity {
         }
         return int16Arr;
     }
-
 
 }

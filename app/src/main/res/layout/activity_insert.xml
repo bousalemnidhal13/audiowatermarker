@@ -61,6 +61,21 @@
             android:text="@string/title_textView"
             android:textSize="18sp" />
 
+        <rm.com.audiowave.AudioWaveView
+            android:id="@+id/wave"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_margin="16dp"
+            app:animateExpansion="false"
+            app:chunkWidth="3dp"
+            app:chunkHeight="24dp"
+            app:minChunkHeight="2dp"
+            app:chunkSpacing="1dp"
+            app:chunkRadius="1dp"
+            app:touchable="false"
+            app:waveColor="@android:color/white"
+            />
+
         <SeekBar
             android:id="@+id/audioSeekbar"
             android:layout_width="match_parent"
@@ -104,8 +119,23 @@
             android:id="@+id/titleTextView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/title_textView"
+            android:text=""
             android:textSize="18sp" />
+
+        <rm.com.audiowave.AudioWaveView
+            android:id="@+id/wave2"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:layout_margin="16dp"
+            app:animateExpansion="false"
+            app:chunkWidth="3dp"
+            app:chunkHeight="24dp"
+            app:minChunkHeight="2dp"
+            app:chunkSpacing="1dp"
+            app:chunkRadius="1dp"
+            app:touchable="false"
+            app:waveColor="@android:color/white"
+            />
 
         <SeekBar
             android:id="@+id/audioSeekbar2"

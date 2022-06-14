@@ -37,6 +37,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import rm.com.audiowave.AudioWaveView;
+
 public class ExtractActivity extends AppCompatActivity {
 
 
@@ -64,6 +66,8 @@ public class ExtractActivity extends AppCompatActivity {
 
     SeekBar audioSeekbar;
 
+    AudioWaveView waveView;
+
     MediaPlayer mediaPlayer;
     String duration;
     ScheduledExecutorService timer;
@@ -86,6 +90,8 @@ public class ExtractActivity extends AppCompatActivity {
         durationTextView = findViewById(R.id.durationTextViewE);
 
         audioSeekbar = findViewById(R.id.audioSeekbarE);
+
+        waveView = findViewById(R.id.waveE);
 
         messageImageview = findViewById(R.id.messageImageviewE);
 
@@ -159,49 +165,71 @@ public class ExtractActivity extends AppCompatActivity {
         extractButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                try {
-                    int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
 
-                    if (isContainedWatermark(audioData)){
-                        short[] int16 = float32ToInt16(audioData);
-                        byte[] message = extractWatermark(int16);
+                Toast tst = Toast.makeText(getApplicationContext(), "EXTRACTING...", Toast.LENGTH_LONG);
+                tst.show();
 
-                        System.out.println(Arrays.toString(message));
-                        System.out.println(message.length);
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                int[] audioData = ReadingAudioFile(audioFileAbsolutePath);
 
-                        byte[] trueMessage = addElement(message, (byte) -119);
+                                if (isContainedWatermark(audioData)){
+                                    short[] int16 = float32ToInt16(audioData);
+                                    byte[] message = extractWatermark(int16);
 
-                        System.out.println(Arrays.toString(trueMessage));
-                        System.out.println(message.length);
+                                    System.out.println(Arrays.toString(message));
+                                    System.out.println(message.length);
 
-                        writeToFile(trueMessage);
+                                    byte[] trueMessage = addElement(message, (byte) -119);
 
-                        File sd = Environment.getExternalStorageDirectory();
-                        File image = new File(sd, "watermark.png");
+                                    System.out.println(Arrays.toString(trueMessage));
+                                    System.out.println(message.length);
 
-                        BitmapFactory.Options bmOptions = new BitmapFactory.Options();
-                        Bitmap bmp = BitmapFactory.decodeFile(image.getAbsolutePath(), bmOptions);
-                        bmp = Bitmap.createScaledBitmap(bmp,messageImageview.getWidth(),messageImageview.getHeight(),true);
+                                    writeToFile(trueMessage);
 
-                        messageImageview.setImageBitmap(bmp);
+                                    File sd = Environment.getExternalStorageDirectory();
+                                    File image = new File(sd + "/watermarked", "watermark.png");
 
-                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK FOUND AND SAVED", Toast.LENGTH_LONG);
-                        toast.show();
+                                    BitmapFactory.Options bmOptions = new BitmapFactory.Options();
+                                    Bitmap bmp = BitmapFactory.decodeFile(image.getAbsolutePath(), bmOptions);
+                                    bmp = Bitmap.createScaledBitmap(bmp,messageImageview.getWidth(),messageImageview.getHeight(),true);
 
-                    } else {
-                        Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK NOT FOUND", Toast.LENGTH_LONG);
-                        toast.show();
-                    }
+                                    Bitmap finalBmp = bmp;
+                                    messageImageview.post(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            messageImageview.setImageBitmap(finalBmp);
+                                        }
+                                    });
 
-
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK FOUND AND SAVED", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+                                    });
+                                } else {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            Toast toast = Toast.makeText(getApplicationContext(), "WATERMARK NOT FOUND", Toast.LENGTH_LONG);
+                                            toast.show();
+                                        }
+                                    });
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }).start();
 
             }
         });
 
-
+        playButton.setEnabled(false);
         extractButton.setEnabled(false);
         playButton.setEnabled(false);
     }
@@ -214,12 +242,42 @@ public class ExtractActivity extends AppCompatActivity {
         if (requestCode == PICK_AUDIO && resultCode == RESULT_OK) {
             if (data != null) {
 
+                playButton.setEnabled(false);
+                extractButton.setEnabled(false);
+
                 // create the media player from the data in the uri
                 audioUri = data.getData();
                 createMediaPlayer(audioUri);
 
-                extractButton.setEnabled(true);
                 audioFileAbsolutePath = UriUtils.getPathFromUri(this, audioUri);
+
+                Toast tst = Toast.makeText(getApplicationContext(), "SAMPLING...", Toast.LENGTH_LONG);
+                tst.show();
+
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            int[] audioData = new int[0];
+                            audioData = ReadingAudioFile(audioFileAbsolutePath);
+                            short[] int16 = float32ToInt16(audioData);
+                            waveView.setScaledData(ShortArray2ByteArray(int16));
+
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Toast toast = Toast.makeText(getApplicationContext(), "DONE", Toast.LENGTH_LONG);
+                                    toast.show();
+                                    playButton.setEnabled(true);
+                                    extractButton.setEnabled(true);
+                                }
+                            });
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                }).start();
 
             }
         }
@@ -239,7 +297,6 @@ public class ExtractActivity extends AppCompatActivity {
             mediaPlayer.prepare();
 
             titleTextView.setText(getNameFromUri(uri));
-            playButton.setEnabled(true);
 
             int millis = mediaPlayer.getDuration();
             long total_secs = TimeUnit.SECONDS.convert(millis, TimeUnit.MILLISECONDS);
@@ -526,7 +583,7 @@ public class ExtractActivity extends AppCompatActivity {
             checkExternalMedia();
             File root = android.os.Environment.getExternalStorageDirectory();
             String path = root.getAbsolutePath();
-            File file = new File(path + "/watermark.png");
+            File file = new File(path + "/watermarked/watermark.png");
 
             FileOutputStream stream = new FileOutputStream(file);
 
@@ -545,6 +602,16 @@ public class ExtractActivity extends AppCompatActivity {
             newArr[i + 1] = arr[i];
         }
         return newArr;
+    }
+
+    public static byte[] ShortArray2ByteArray(short[] values){
+        ByteBuffer buffer = ByteBuffer.allocate(2 * values.length);
+        buffer.order(LITTLE_ENDIAN); // data must be in little endian format
+        for (short value : values){
+            buffer.putShort(value);
+        }
+        buffer.rewind();
+        return buffer.array();
     }
 
 }

@@ -115,7 +115,7 @@
             android:id="@+id/titleTextView2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/title_textView"
+            android:text=""
             android:textSize="18sp" />
 
         <rm.com.audiowave.AudioWaveView

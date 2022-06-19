@@ -55,8 +55,6 @@ import rm.com.audiowave.AudioWaveView;
 
 public class InsertActivity extends AppCompatActivity {
 
-
-
     int type [] = {0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1};
     int numberOfBytes[] = {4, 4, 4, 4, 4, 2, 2, 4, 4, 2, 2, 4, 4};
     int chunkSize, subChunk1Size, sampleRate, byteRate, subChunk2Size=1, bytePerSample;
@@ -64,13 +62,10 @@ public class InsertActivity extends AppCompatActivity {
     String chunkID, format, subChunk1ID, subChunk2ID;
 
 
-
     // declarations needed for watermarking methodes
     private static final int[] shiftNum = {1,3,7,15,31,63,127,255};
     public static final String MARKER = "@RM";
     public static final int HEADER_LENGTH = MARKER.length() * 8 + 32 + 32 + 8 + 16 + 8 + 8;
-    private int[] dataHeader = new int[HEADER_LENGTH];
-
 
 
     Uri audioUri;
@@ -302,7 +297,7 @@ public class InsertActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                         int16 = float32ToInt16(audioData);
-                        waveView.setScaledData(ShortArray2ByteArray(int16));
+                        waveView.setRawData(ShortArray2ByteArray(int16));
 
                         runOnUiThread(new Runnable() {
                             @Override
@@ -380,7 +375,7 @@ public class InsertActivity extends AppCompatActivity {
                             } else {
 
                                 System.out.println(Arrays.toString(int16));
-                                waveView2.setScaledData(ShortArray2ByteArray(int16));
+                                waveView2.setRawData(ShortArray2ByteArray(int16));
 
                                 try {
                                     WriteCleanAudioWav(context, "new_song.wav", int16);
@@ -443,7 +438,7 @@ public class InsertActivity extends AppCompatActivity {
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
-                    releaseMediaPlayer();
+                    playButton.setText("PLAY");
                 }
             });
 
@@ -491,10 +486,10 @@ public class InsertActivity extends AppCompatActivity {
             audioSeekbar2.setMax(millis);
             audioSeekbar2.setProgress(0);
 
-            mediaPlayer2.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
-                    releaseMediaPlayer();
+                    playButton2.setText("PLAY");
                 }
             });
 
@@ -722,7 +717,7 @@ public class InsertActivity extends AppCompatActivity {
     public static ByteBuffer ByteArrayToNumber(byte bytes[], int numOfBytes, int type){
         ByteBuffer buffer = ByteBuffer.allocate(numOfBytes);
         if (type == 0){
-            buffer.order(BIG_ENDIAN); // Check the illustration. If it says little endian, use LITTLE_ENDIAN
+            buffer.order(BIG_ENDIAN);
         }
         else{
             buffer.order(LITTLE_ENDIAN);

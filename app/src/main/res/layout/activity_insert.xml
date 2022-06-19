@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg"
+    android:background="@drawable/bg2"
     tools:context=".InsertActivity">
 
 
@@ -12,8 +12,8 @@
         android:id="@+id/pickFileButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:background="#0047AB"
         android:text="@string/pick_button"
-        android:background="@drawable/custom_button"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toTopOf="@id/playerLinear"
         app:layout_constraintEnd_toEndOf="parent"
@@ -37,7 +37,7 @@
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
             android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"
+            android:background="#0047AB"
             android:text="@string/insert_button" />
 
     </LinearLayout>
@@ -51,6 +51,7 @@
         android:padding="10dp"
         app:layout_constraintBottom_toTopOf="@id/watermarkingLinear"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/pickFileButton">
 
@@ -59,6 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/title_textView"
+            android:textColor="@color/button_textColor"
             android:textSize="18sp" />
 
         <rm.com.audiowave.AudioWaveView
@@ -67,20 +69,18 @@
             android:layout_height="32dp"
             android:layout_margin="16dp"
             app:animateExpansion="false"
-            app:chunkWidth="3dp"
             app:chunkHeight="24dp"
-            app:minChunkHeight="2dp"
-            app:chunkSpacing="1dp"
             app:chunkRadius="1dp"
+            app:chunkSpacing="1dp"
+            app:chunkWidth="3dp"
+            app:minChunkHeight="2dp"
             app:touchable="false"
-            app:waveColor="@android:color/white"
-            />
+            app:waveColor="@android:color/white" />
 
         <SeekBar
             android:id="@+id/audioSeekbar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:outlineAmbientShadowColor="#00fff5"
             android:max="100"
             android:padding="10dp" />
 
@@ -96,9 +96,9 @@
             android:id="@+id/playButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/custom_button"
+            android:background="#191970"
             android:text="@string/play_button"
-            android:textColor="#FFFFFF"/>
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
 
@@ -111,12 +111,12 @@
         android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/watermarkingLinear">
 
         <TextView
             android:id="@+id/titleTextView2"
+            android:textColor="@color/white"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text=""
@@ -141,7 +141,6 @@
             android:id="@+id/audioSeekbar2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:outlineAmbientShadowColor="#00fff5"
             android:max="100"
             android:padding="10dp" />
 
@@ -157,9 +156,9 @@
             android:id="@+id/playButton2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:background="#191970"
             android:text="@string/play_button"
-            android:textColor="#FFFFFF"
-            android:background="@drawable/custom_button"/>
+            android:textColor="#FFFFFF" />
 
     </LinearLayout>
 

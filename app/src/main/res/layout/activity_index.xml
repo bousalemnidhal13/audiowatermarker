@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg"
+    android:background="@drawable/bg2"
     tools:context=".IndexActivity">
 
 
@@ -24,7 +24,7 @@
             android:layout_width="200dp"
             android:layout_height="100dp"
             android:textSize="20dp"
-            android:background="@drawable/custom_button"
+            android:background="#0047AB"
             android:text="Insert Watermark"
             android:textColor="#FFFFFF"
             android:textAllCaps="false"/>
@@ -35,14 +35,12 @@
             android:layout_width="200dp"
             android:layout_height="100dp"
             android:textSize="20dp"
-            android:background="@drawable/custom_button"
+            android:background="#0047AB"
             android:text="Extract Watermark"
             android:textColor="#FFFFFF"
             android:textAllCaps="false"/>
 
     </LinearLayout>
-
-
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

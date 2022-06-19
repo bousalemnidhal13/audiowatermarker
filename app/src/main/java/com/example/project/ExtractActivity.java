@@ -261,7 +261,7 @@ public class ExtractActivity extends AppCompatActivity {
                             int[] audioData = new int[0];
                             audioData = ReadingAudioFile(audioFileAbsolutePath);
                             short[] int16 = float32ToInt16(audioData);
-                            waveView.setScaledData(ShortArray2ByteArray(int16));
+                            waveView.setRawData(ShortArray2ByteArray(int16));
 
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -313,7 +313,7 @@ public class ExtractActivity extends AppCompatActivity {
             mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
-                    releaseMediaPlayer();
+                    playButton.setText("PLAY");
                 }
             });
 
@@ -374,7 +374,7 @@ public class ExtractActivity extends AppCompatActivity {
     // the methode for extracting the watermark
     public byte[] extractWatermark(short[] audioSamples) {
 
-        int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
+        int LSBUSed = 1;
         int shiftNumber = this.shiftNum[LSBUSed-1];
 
         int byteExtract = 0;
@@ -382,7 +382,7 @@ public class ExtractActivity extends AppCompatActivity {
 
         int startIndex = 128;
 
-        int numByte = audioSamples.length * LSBUSed / 8; // Integer.parseInt((String) this.properties.get("msgSize"));// lengthMessage * LSBUSed / 8;
+        int numByte = audioSamples.length * LSBUSed / 8;
         byte[] message = new byte[numByte];
 
         int i = 0;

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/bg"
+    android:background="@drawable/bg2"
     tools:context=".ExtractActivity">
 
     <Button
@@ -12,8 +12,8 @@
         android:layout_margin="20dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/custom_button"
         android:text="@string/pick_button"
+        android:background="#0047AB"
         android:textColor="#FFFFFF"
         app:layout_constraintBottom_toTopOf="@id/playerLinearE"
         app:layout_constraintEnd_toEndOf="parent"
@@ -37,9 +37,9 @@
             android:id="@+id/extractButtonE"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/custom_button"
-            android:layout_margin="10dp"
+            android:background="#0047AB"
             android:textColor="#FFFFFF"
+            android:layout_margin="10dp"
             android:text="@string/extract_button" />
 
     </LinearLayout>
@@ -97,10 +97,10 @@
 
         <Button
             android:id="@+id/playButtonE"
-            android:background="@drawable/custom_button"
+            android:textColor="#FFFFFF"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
+            android:background="#191970"
             android:text="@string/play_button" />
 
     </LinearLayout>

@@ -343,7 +343,7 @@ public class InsertActivity extends AppCompatActivity {
                         System.out.println("First condition");
 
                     } else {
-                        requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+                        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
                         System.out.println("Second condition");
                     }
 
@@ -369,8 +369,14 @@ public class InsertActivity extends AppCompatActivity {
 
                             if (int16.length == 0){
 
-                                Toast toast = Toast.makeText(getApplicationContext(), "ERROR, IMAGE SIZE TOO BIG", Toast.LENGTH_LONG);
-                                toast.show();
+                                runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        Toast toast = Toast.makeText(getApplicationContext(), "ERROR, IMAGE SIZE TOO BIG", Toast.LENGTH_LONG);
+                                        toast.show();
+                                    }
+                                });
+
 
                             } else {
 
@@ -579,8 +585,7 @@ public class InsertActivity extends AppCompatActivity {
                 kar >>= 1;
                 offset++;
             }
-        }
-        // end write marker --- next offset = 24
+        }        // end write marker --- next offset = 24
 
         // write length message to samples
         int lengthMessage = (int) Math.ceil((double)message.length * 8 /(double) LSBUSed);

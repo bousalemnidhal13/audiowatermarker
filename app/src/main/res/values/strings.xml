@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Project</string>
+    <string name="app_name">WaveMarker</string>
     <string name="pick_button">PICK FILE</string>
     <string name="record_button">RECORD</string>
     <string name="play_button">PLAY</string>

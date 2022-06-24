@@ -204,6 +204,7 @@ public class ExtractActivity extends AppCompatActivity {
                                         }
                                     });
 
+
                                     runOnUiThread(new Runnable() {
                                         @Override
                                         public void run() {
@@ -219,6 +220,8 @@ public class ExtractActivity extends AppCompatActivity {
                                             toast.show();
                                         }
                                     });
+
+
                                 }
                             } catch (IOException e) {
                                 e.printStackTrace();

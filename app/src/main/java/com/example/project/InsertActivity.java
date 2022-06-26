@@ -563,7 +563,7 @@ public class InsertActivity extends AppCompatActivity {
     // the methode for inserting the watermark
     public int[] applyWatermark(int[] audioSamples, byte[] message) {
 
-        int LSBUSed = 1; // Integer.parseInt((String)this.properties.get("lsb"));
+        int LSBUSed = 1;
         int shiftNumber = this.shiftNum[LSBUSed-1];
         int[] newSample = new int[audioSamples.length];
         int offset = 0;
@@ -614,7 +614,7 @@ public class InsertActivity extends AppCompatActivity {
         }
 
         //write method off = 88
-        int method = 1; // Integer.parseInt((String) this.properties.get("method"));
+        int method = 1;
         for (int j=0;j<8;j++){
             int bitExtract = method & 1;
             newSample[offset] = audioSamples[offset] & ~1;
@@ -624,7 +624,7 @@ public class InsertActivity extends AppCompatActivity {
         }
 
         //write lsb off 96
-        int lsb = 1; // Integer.parseInt((String) this.properties.get("lsb"));
+        int lsb = 1;
         for (int j=0;j<16;j++){
             int bitExtract = lsb & 1;
             newSample[offset] = audioSamples[offset] & ~1;
@@ -634,7 +634,7 @@ public class InsertActivity extends AppCompatActivity {
         }
 
         //write is compress? off 112
-        int compress = 1; // Integer.parseInt((String) this.properties.get("compress"));
+        int compress = 1;
         for (int j=0;j<8;j++){
             int bitExtract = compress & 1;
             newSample[offset] = audioSamples[offset] & ~1;
@@ -644,7 +644,7 @@ public class InsertActivity extends AppCompatActivity {
         }
 
         //write is encrypt? off 120
-        int encrypt = 1; // Integer.parseInt((String) this.properties.get("encrypt"));
+        int encrypt = 1;
         for (int j=0;j<8;j++){
             int bitExtract = encrypt & 1;
             newSample[offset] = audioSamples[offset] & ~1;
